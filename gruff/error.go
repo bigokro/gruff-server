@@ -1,4 +1,4 @@
-package model
+package gruff
 
 import (
 	"fmt"
@@ -66,7 +66,7 @@ func (err CoreError) IsWarning() bool {
 	return err.ErrCode == ERROR_CODE_WARNING
 }
 
-func NewGruffError(code, subcode int, location, msg string, data map[string]interface{}) GruffError {
+func NewCoreError(code, subcode int, location, msg string, data map[string]interface{}) GruffError {
 	if subcode == 0 {
 		if code == ERROR_CODE_BUSINESS_ERROR {
 			subcode = ERROR_SUBCODE_UNDEFINED
@@ -117,7 +117,7 @@ func newElipsisError(code int, msg string, opts ...interface{}) GruffError {
 		}
 	}
 
-	return NewGruffError(code, subcode, ParentCallerInfo(), msg, data)
+	return NewCoreError(code, subcode, ParentCallerInfo(), msg, data)
 }
 
 func ParentCallerInfo() string {

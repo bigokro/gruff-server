@@ -1,4 +1,4 @@
-package model
+package gruff
 
 type Context struct {
 	Model

@@ -1,4 +1,4 @@
-package model
+package gruff
 
 type Value struct {
 	Model

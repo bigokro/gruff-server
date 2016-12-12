@@ -1,4 +1,4 @@
-package model
+package gruff
 
 type Reference struct {
 	Model

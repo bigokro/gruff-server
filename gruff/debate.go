@@ -1,4 +1,4 @@
-package model
+package gruff
 
 type Debate struct {
 	Model
@@ -10,4 +10,6 @@ type Debate struct {
 	References  []Reference `json:"refs"`
 	CreatedByID uint64      `json:"createdById"`
 	CreatedBy   *User       `json:"createdBy"`
+	Contexts    []Context   `json:"contexts"  gorm:"many2many:debate_contexts;"`
+	Tags        []Tag       `json:"tags"  gorm:"many2many:debate_tags;"`
 }

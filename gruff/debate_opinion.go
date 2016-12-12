@@ -1,4 +1,4 @@
-package model
+package gruff
 
 type DebateOpinion struct {
 	Model

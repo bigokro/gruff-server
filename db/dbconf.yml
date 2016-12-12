@@ -1,0 +1,16 @@
+development:
+  driver: postgres
+  open: dbname=gruff sslmode=disable
+
+staging:
+  driver: postgres
+  open: dbname=gruff sslmode=disable
+ci:
+  driver: postgres
+  open: dbname=circle_test sslmode=disable
+
+production:
+  driver: postgres
+  open: dbname=gruff sslmode=disable
+
+#open: $DATABASE_URL

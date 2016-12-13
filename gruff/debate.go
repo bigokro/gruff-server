@@ -2,7 +2,7 @@ package gruff
 
 type Debate struct {
 	Model
-	UUID        string     `json:"uuid" sql:"not null"`
+	Identifier
 	CreatedByID uint64     `json:"createdById"`
 	CreatedBy   *User      `json:"createdBy"`
 	Title       string     `json:"title" sql:"not null" valid:"length(3|1000)"`

@@ -9,7 +9,7 @@ const ARGUMENT_TYPE_CON_IMPACT int = 6
 
 type Argument struct {
 	Model
-	UUID         string     `json:"uuid" sql:"not null"`
+	Identifier
 	CreatedByID  uint64     `json:"createdById"`
 	CreatedBy    *User      `json:"createdBy"`
 	ParentID     *uint64    `json:"parentId,omitempty"`

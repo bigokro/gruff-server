@@ -1,10 +1,13 @@
 package gruff
 
 import (
+	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 	"reflect"
 	"testing"
 )
+
+var ZERO_UUID uuid.UUID
 
 func TestIsIdentifier(t *testing.T) {
 	assert.False(t, IsIdentifier(reflect.TypeOf(Tag{})))
@@ -21,8 +24,8 @@ func TestIsIdentifier(t *testing.T) {
 func TestIdentifierGenerateUUID(t *testing.T) {
 	d := Debate{}
 
-	assert.Equal(t, "", d.UUID)
+	assert.Equal(t, ZERO_UUID, d.ID)
 
-	assert.True(t, (&d).GenerateUUID() != "")
-	assert.True(t, d.UUID != "")
+	assert.True(t, (&d).GenerateUUID() != ZERO_UUID)
+	assert.True(t, d.ID != ZERO_UUID)
 }

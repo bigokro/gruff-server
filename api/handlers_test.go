@@ -1,9 +1,9 @@
 package api
 
 import (
-	model "../model"
 	_ "errors"
 	"fmt"
+	"github.com/bigokro/gruff-server/gruff"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/labstack/echo"
@@ -79,15 +79,15 @@ func OpenTestConnection() (db *gorm.DB, err error) {
 
 func runMigration(db *gorm.DB) {
 	values := []interface{}{
-		&mondo.User{},
-		&mondo.Debate{},
-		&mondo.DebateOpinion{},
-		&mondo.Argument{},
-		&mondo.ArgumentOpinion{},
-		&mondo.Reference{},
-		&mondo.Tag{},
-		&mondo.Context{},
-		&mondo.Value{},
+		&gruff.User{},
+		&gruff.Debate{},
+		&gruff.DebateOpinion{},
+		&gruff.Argument{},
+		&gruff.ArgumentOpinion{},
+		&gruff.Link{},
+		&gruff.Tag{},
+		&gruff.Context{},
+		&gruff.Value{},
 	}
 
 	for _, value := range values {

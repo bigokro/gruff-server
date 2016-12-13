@@ -68,11 +68,11 @@ func SetUpRouter(test bool, db *gorm.DB) *echo.Echo {
 	private.PUT("/debate_opinions/:id", ctx.Update)
 	private.DELETE("/debate_opinions/:id", ctx.Delete)
 
-	public.GET("/references", ctx.List)
-	public.GET("/references/:id", ctx.Get)
-	private.POST("/references", ctx.Create)
-	private.PUT("/references/:id", ctx.Update)
-	private.DELETE("/references/:id", ctx.Delete)
+	public.GET("/links", ctx.List)
+	public.GET("/links/:id", ctx.Get)
+	private.POST("/links", ctx.Create)
+	private.PUT("/links/:id", ctx.Update)
+	private.DELETE("/links/:id", ctx.Delete)
 
 	public.GET("/tags", ctx.List)
 	public.GET("/tags/:id", ctx.Get)

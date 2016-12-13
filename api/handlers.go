@@ -1,8 +1,8 @@
 package api
 
 import (
-	model "../model"
 	_ "fmt"
+	"github.com/bigokro/gruff-server/gruff"
 	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo"
 	"net/http"
@@ -20,7 +20,7 @@ func (ctx *Context) List(c echo.Context) error {
 	items := reflect.New(reflect.SliceOf(ctx.Type)).Interface()
 	err := db.Find(items).Error
 	if err != nil {
-		return model.NewServerError(err.Error())
+		return gruff.NewServerError(err.Error())
 	}
 
 	items = itemsOrEmptySlice(ctx.Type, items)
@@ -283,9 +283,9 @@ func itemsOrEmptySlice(t reflect.Type, items interface{}) interface{} {
 	return items
 }
 
-func BasicValidationForCreate(ctx *Context, c echo.Context, item interface{}) model.GruffError {
-	if model.IsValidator(ctx.Type) {
-		validator := item.(model.Validator)
+func BasicValidationForCreate(ctx *Context, c echo.Context, item interface{}) gruff.GruffError {
+	if gruff.IsValidator(ctx.Type) {
+		validator := item.(gruff.Validator)
 		return validator.ValidateForCreate()
 	} else {
 		return nil
@@ -293,8 +293,8 @@ func BasicValidationForCreate(ctx *Context, c echo.Context, item interface{}) mo
 }
 
 func BasicValidationForUpdate(ctx *Context, c echo.Context, item interface{}) error {
-	if model.IsValidator(ctx.Type) {
-		return model.ValidateStructFields(item)
+	if gruff.IsValidator(ctx.Type) {
+		return gruff.ValidateStructFields(item)
 	} else {
 		return nil
 	}

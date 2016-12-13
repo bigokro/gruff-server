@@ -1,9 +1,9 @@
 package main
 
 import (
-	api "./api"
-	config "./config"
 	"fmt"
+	"github.com/bigokro/gruff-server/api"
+	"github.com/bigokro/gruff-server/config"
 	"github.com/labstack/echo/engine/fasthttp"
 	"os"
 	"time"

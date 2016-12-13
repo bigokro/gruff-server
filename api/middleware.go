@@ -1,7 +1,7 @@
 package api
 
 import (
-	model "../model"
+	"github.com/bigokro/gruff-server/gruff"
 	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo"
 	_ "os"
@@ -70,31 +70,31 @@ func PathParts(path string) []string {
 func StringToType(typeName string) (t reflect.Type) {
 	switch typeName {
 	case "users":
-		var m model.User
+		var m gruff.User
 		t = reflect.TypeOf(m)
 	case "debates":
-		var m model.Debate
+		var m gruff.Debate
 		t = reflect.TypeOf(m)
 	case "debate_opinions":
-		var m model.DebateOpinion
+		var m gruff.DebateOpinion
 		t = reflect.TypeOf(m)
 	case "arguments":
-		var m model.Argument
+		var m gruff.Argument
 		t = reflect.TypeOf(m)
 	case "argument_opinions":
-		var m model.ArgumentOpinion
+		var m gruff.ArgumentOpinion
 		t = reflect.TypeOf(m)
 	case "contexts":
-		var m model.Context
+		var m gruff.Context
 		t = reflect.TypeOf(m)
-	case "references":
-		var m model.Reference
+	case "links":
+		var m gruff.Link
 		t = reflect.TypeOf(m)
 	case "tags":
-		var m model.Tag
+		var m gruff.Tag
 		t = reflect.TypeOf(m)
 	case "values":
-		var m model.Value
+		var m gruff.Value
 		t = reflect.TypeOf(m)
 	}
 	return

@@ -1,7 +1,7 @@
 package api
 
 import (
-	model "../model"
+	"github.com/bigokro/gruff-server/gruff"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 	"golang.org/x/crypto/bcrypt"
@@ -22,7 +22,7 @@ type customPassword struct {
 }
 
 func (ctx *Context) SignUp(c echo.Context) error {
-	u := new(model.User)
+	u := new(gruff.User)
 
 	if err := c.Bind(u); err != nil {
 		return err
@@ -40,13 +40,13 @@ func (ctx *Context) SignUp(c echo.Context) error {
 }
 
 func (ctx *Context) SignIn(c echo.Context) error {
-	u := model.User{}
+	u := gruff.User{}
 	if err := c.Bind(&u); err != nil {
 		return err
 	}
 
 	if u.Email != "" {
-		user := model.User{}
+		user := gruff.User{}
 		if err := ctx.Database.Where("email = ?", u.Email).Find(&user).Error; err != nil {
 			return c.String(http.StatusUnauthorized, "Unauthorized")
 		}
@@ -78,7 +78,7 @@ func (ctx *Context) SignIn(c echo.Context) error {
 	return c.String(http.StatusUnauthorized, "Unauthorized")
 }
 
-func verifyPassword(user model.User, password string) (bool, error) {
+func verifyPassword(user gruff.User, password string) (bool, error) {
 	return bcrypt.CompareHashAndPassword(user.HashedPassword, []byte(password)) == nil, nil
 }
 
@@ -88,10 +88,10 @@ func (ctx *Context) ChangePassword(c echo.Context) error {
 		return err
 	}
 
-	user := model.User{}
+	user := gruff.User{}
 	err := ctx.Database.Where("email = ?", u.Email).Find(&user).Error
 	if err != nil {
-		return model.NewServerError(err.Error())
+		return gruff.NewServerError(err.Error())
 	}
 
 	if ok, _ := verifyPassword(user, u.OldPassword); ok {

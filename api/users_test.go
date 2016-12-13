@@ -1,9 +1,9 @@
 package api
 
 import (
-	mondo "../model"
 	"encoding/json"
 	"fmt"
+	"github.com/bigokro/gruff-server/gruff"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
@@ -21,7 +21,7 @@ func TestListUsers(t *testing.T) {
 	TESTDB.Create(&u1)
 	TESTDB.Create(&u2)
 
-	expectedResults, _ := json.Marshal([]mondo.User{u1, u2})
+	expectedResults, _ := json.Marshal([]gruff.User{u1, u2})
 
 	r.GET("/api/users")
 	res, _ := r.Run(Router())
@@ -109,8 +109,8 @@ func TestDeleteUsers(t *testing.T) {
 	assert.Equal(t, http.StatusOK, res.Status())
 }
 
-func createUser(name string, email string) mondo.User {
-	u := mondo.User{
+func createUser(name string, email string) gruff.User {
+	u := gruff.User{
 		Name:     name,
 		Email:    email,
 		Password: "123456",

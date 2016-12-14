@@ -118,7 +118,7 @@ func createArgumentOpinion(db *gorm.DB) gruff.ArgumentOpinion {
 	ao := gruff.ArgumentOpinion{
 		Relevance:  2,
 		Impact:     5,
-		ArgumentID: uint64(a.ID),
+		ArgumentID: a.ID,
 		UserID:     uint64(u.ID),
 	}
 

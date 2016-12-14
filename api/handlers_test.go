@@ -2,12 +2,10 @@ package api
 
 import (
 	_ "errors"
-	"fmt"
 	"github.com/bigokro/gruff-server/gruff"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/labstack/echo"
-	"os"
 )
 
 var CTX *Context
@@ -18,7 +16,7 @@ var TESTTOKEN string
 var READ_ONLY bool = false
 
 func init() {
-	INITDB = InitTestDB()
+	INITDB = gruff.InitTestDB()
 }
 
 func setup() {

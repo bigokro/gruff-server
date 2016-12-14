@@ -53,6 +53,8 @@ func OpenTestConnection() (db *gorm.DB, err error) {
 }
 
 func runMigration(db *gorm.DB) {
+	db.Exec("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\"")
+
 	values := []interface{}{
 		&User{},
 		&Debate{},

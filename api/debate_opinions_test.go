@@ -117,7 +117,7 @@ func createDebateOpinion(db *gorm.DB) gruff.DebateOpinion {
 
 	do := gruff.DebateOpinion{
 		UserID:   uint64(u.ID),
-		DebateID: uint64(d.ID),
+		DebateID: d.ID,
 		Truth:    10,
 	}
 

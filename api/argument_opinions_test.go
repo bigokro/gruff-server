@@ -106,13 +106,20 @@ func TestDeleteArgumentOpinions(t *testing.T) {
 }
 
 func createArgumentOpinion(db *gorm.DB) gruff.ArgumentOpinion {
+	d1 := gruff.Debate{Title: "Parent debate", Description: "This is the parent debate"}
+	d2 := gruff.Debate{Title: "Child debate", Description: "This is the child debate"}
+	db.Create(&d1)
+	db.Create(&d2)
+
 	a := gruff.Argument{
 		Title:       "arguments",
 		Description: "arguments",
 		Type:        gruff.ARGUMENT_TYPE_PRO_TRUTH,
+		ParentID:    d1.ID,
+		DebateID:    d2.ID,
 	}
-
 	db.Create(&a)
+
 	u := createUserAO(db)
 
 	ao := gruff.ArgumentOpinion{

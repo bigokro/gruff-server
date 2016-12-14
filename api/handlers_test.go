@@ -21,9 +21,6 @@ func init() {
 
 func setup() {
 	TESTDB = INITDB.Begin()
-	TESTDB.Callback().Create().Replace("fail_on_ro_update", failOnReadOnlyUpdate)
-	TESTDB.Callback().Update().Replace("fail_on_ro_update", failOnReadOnlyUpdate)
-	TESTDB.Callback().Delete().Replace("fail_on_ro_update", failOnReadOnlyUpdate)
 
 	if CTX == nil {
 		CTX = &Context{}
@@ -34,12 +31,6 @@ func setup() {
 
 func teardown() {
 	TESTDB = TESTDB.Rollback()
-}
-
-func failOnReadOnlyUpdate(scope *gorm.Scope) {
-	if READ_ONLY {
-		panic("Performing an update on read-only transaction!")
-	}
 }
 
 func Router() *echo.Echo {

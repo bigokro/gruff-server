@@ -13,9 +13,9 @@ const ARGUMENT_TYPE_CON_IMPACT int = 6
 
 type Argument struct {
 	Identifier
-	ParentID     *uint64    `json:"parentId,omitempty"`
+	ParentID     uuid.UUID  `json:"parentId,omitempty"`
 	Parent       *Debate    `json:"parent,omitempty"`
-	ArgumentID   *uuid.UUID `json:"argumentId,omitempty"`
+	ArgumentID   uuid.UUID  `json:"argumentId,omitempty"`
 	Argument     *Argument  `json:"argument,omitempty"`
 	DebateID     uuid.UUID  `json:"debateId" sql:"not null"`
 	Debate       Debate     `json:"debate"`

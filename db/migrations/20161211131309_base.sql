@@ -72,8 +72,7 @@ CREATE UNIQUE INDEX uix_users_username ON users USING btree (username);
 -- Table Debates
 --
 CREATE TABLE debates (
-    id integer NOT NULL,
-    uuid char(36) NOT NULL,
+    id uuid NOT NULL,
     created_by_id integer NOT NULL,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
@@ -82,19 +81,6 @@ CREATE TABLE debates (
     description character varying(4000),
     truth numeric
 );
-
-CREATE SEQUENCE debates_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-ALTER SEQUENCE debates_id_seq OWNED BY debates.id;
-
-ALTER TABLE ONLY debates ALTER COLUMN id SET DEFAULT nextval('debates_id_seq'::regclass);
-
-SELECT pg_catalog.setval('debates_id_seq', 1, false);
 
 ALTER TABLE ONLY debates
     ADD CONSTRAINT debates_pkey PRIMARY KEY (id);
@@ -105,14 +91,11 @@ ALTER TABLE ONLY debates
 
 CREATE INDEX idx_debates_created_by_id ON debates USING btree (created_by_id);
 
-CREATE UNIQUE INDEX uix_debates_uuid ON debates USING btree (uuid);
-
 -- 
 -- Table Arguments
 -- 
 CREATE TABLE arguments (
-    id integer NOT NULL,
-    uuid char(36) NOT NULL,
+    id uuid NOT NULL,
     created_by_id integer NOT NULL,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
@@ -122,23 +105,10 @@ CREATE TABLE arguments (
     type integer NOT NULL,
     relevance numeric,
     impact numeric,
-    parent_id integer,
-    argument_id integer,
-    debate_id integer NOT NULL
+    parent_id uuid,
+    argument_id uuid,
+    debate_id uuid NOT NULL
 );
-
-CREATE SEQUENCE arguments_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-ALTER SEQUENCE arguments_id_seq OWNED BY arguments.id;
-
-ALTER TABLE ONLY arguments ALTER COLUMN id SET DEFAULT nextval('arguments_id_seq'::regclass);
-
-SELECT pg_catalog.setval('arguments_id_seq', 1, false);
 
 ALTER TABLE ONLY arguments
     ADD CONSTRAINT arguments_pkey PRIMARY KEY (id);
@@ -164,8 +134,6 @@ CREATE INDEX idx_arguments_debate_id ON arguments USING btree (debate_id);
 CREATE INDEX idx_arguments_argument_id ON arguments USING btree (argument_id);
 CREATE INDEX idx_arguments_created_by_id ON arguments USING btree (created_by_id);
 
-CREATE UNIQUE INDEX uix_arguments_uuid ON arguments USING btree (uuid);
-
 CREATE UNIQUE INDEX uix_arguments_type ON arguments USING btree (parent_id, debate_id, argument_id, type);
 
 -- 
@@ -178,7 +146,7 @@ CREATE TABLE debate_opinions (
     deleted_at timestamp with time zone,
     truth numeric,
     user_id integer NOT NULL,
-    debate_id integer NOT NULL
+    debate_id uuid NOT NULL
 );
 
 CREATE SEQUENCE debate_opinions_id_seq
@@ -219,7 +187,7 @@ CREATE TABLE argument_opinions (
     relevance numeric,
     impact numeric,
     user_id integer NOT NULL,
-    argument_id integer NOT NULL
+    argument_id uuid NOT NULL
 );
 
 CREATE SEQUENCE argument_opinions_id_seq
@@ -253,8 +221,7 @@ CREATE INDEX idx_argument_opinions_argument_id ON argument_opinions USING btree 
 -- Table Links
 -- 
 CREATE TABLE links (
-    id integer NOT NULL,
-    uuid char(36) NOT NULL,
+    id uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     deleted_at timestamp with time zone,
@@ -262,28 +229,15 @@ CREATE TABLE links (
     description character varying(4000),
     url character varying(4000),
     created_by_id integer NOT NULL,
-    debate_id integer NOT NULL
+    debate_id uuid NOT NULL
 );
-
-CREATE SEQUENCE links_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-ALTER SEQUENCE links_id_seq OWNED BY links.id;
-
-ALTER TABLE ONLY links ALTER COLUMN id SET DEFAULT nextval('links_id_seq'::regclass);
-
-SELECT pg_catalog.setval('links_id_seq', 1, false);
 
 ALTER TABLE ONLY links
     ADD CONSTRAINT links_pkey PRIMARY KEY (id);
 
 ALTER TABLE ONLY links
     ADD CONSTRAINT links_created_by_id_fkey FOREIGN KEY (created_by_id)
-      REFERENCES debates (id);
+      REFERENCES users (id);
 
 ALTER TABLE ONLY links
     ADD CONSTRAINT links_debate_id_fkey FOREIGN KEY (debate_id)
@@ -291,9 +245,6 @@ ALTER TABLE ONLY links
 
 CREATE INDEX idx_links_created_by_id ON links USING btree (created_by_id);
 CREATE INDEX idx_links_debate_id ON links USING btree (debate_id);
-
-CREATE UNIQUE INDEX uix_links_uuid ON links USING btree (uuid);
-
 
 -- 
 -- Table Tags
@@ -399,7 +350,7 @@ CREATE INDEX idx_values_parent_id ON values USING btree (parent_id);
 -- 
 CREATE TABLE debate_tags (
     tag_id integer NOT NULL,
-    debate_id integer NOT NULL
+    debate_id uuid NOT NULL
 );
 
 ALTER TABLE ONLY debate_tags
@@ -421,7 +372,7 @@ CREATE INDEX idx_debate_tags_debate_id ON debate_tags USING btree (debate_id);
 -- 
 CREATE TABLE debate_contexts (
     context_id integer NOT NULL,
-    debate_id integer NOT NULL
+    debate_id uuid NOT NULL
 );
 
 ALTER TABLE ONLY debate_contexts
@@ -443,7 +394,7 @@ CREATE INDEX idx_debate_contexts_debate_id ON debate_contexts USING btree (debat
 -- 
 CREATE TABLE debate_values (
     value_id integer NOT NULL,
-    debate_id integer NOT NULL
+    debate_id uuid NOT NULL
 );
 
 ALTER TABLE ONLY debate_values

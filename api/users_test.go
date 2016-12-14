@@ -16,8 +16,8 @@ func TestListUsers(t *testing.T) {
 
 	r := New(Token)
 
-	u1 := createUser("test1", "test1@test1.com")
-	u2 := createUser("test2", "test2@test2.com")
+	u1 := createUser("test1", "test1", "test1@test1.com")
+	u2 := createUser("test2", "test2", "test2@test2.com")
 	TESTDB.Create(&u1)
 	TESTDB.Create(&u2)
 
@@ -35,8 +35,8 @@ func TestListUsersPagination(t *testing.T) {
 
 	r := New(Token)
 
-	u1 := createUser("test1", "test1@test1.com")
-	u2 := createUser("test2", "test2@test2.com")
+	u1 := createUser("test1", "test1", "test1@test1.com")
+	u2 := createUser("test2", "test2", "test2@test2.com")
 	TESTDB.Create(&u1)
 	TESTDB.Create(&u2)
 
@@ -51,7 +51,7 @@ func TestGetUsers(t *testing.T) {
 
 	r := New(Token)
 
-	u1 := createUser("test1", "test1@test1.com")
+	u1 := createUser("test1", "test1", "test1@test1.com")
 	TESTDB.Create(&u1)
 
 	expectedResults, _ := json.Marshal(u1)
@@ -68,13 +68,10 @@ func TestCreateUsers(t *testing.T) {
 
 	r := New(nil)
 
-	u1 := createUser("test1", "test1@test1.com")
-	TESTDB.Create(&u1)
-
-	u2 := createUser("test1", "test1@test1.com")
+	u1 := createUser("test1", "test1", "test1@test1.com")
 
 	r.POST("/api/users")
-	r.SetBody(u2)
+	r.SetBody(u1)
 	res, _ := r.Run(Router())
 	assert.Equal(t, http.StatusCreated, res.Status())
 }
@@ -85,9 +82,8 @@ func TestUpdateUsers(t *testing.T) {
 
 	r := New(Token)
 
-	u1 := createUser("test1", "test1@test1.com")
+	u1 := createUser("test1", "test1", "test1@test1.com")
 	TESTDB.Create(&u1)
-	// createUsersElastic(u1.ID, u1)
 
 	r.PUT(fmt.Sprintf("/api/users/%d", u1.ID))
 	r.SetBody(u1)
@@ -100,18 +96,18 @@ func TestDeleteUsers(t *testing.T) {
 	defer teardown()
 	r := New(Token)
 
-	u1 := createUser("test1", "test1@test1.com")
+	u1 := createUser("test1", "test1", "test1@test1.com")
 	TESTDB.Create(&u1)
-	// createUsersElastic(u1.ID, u1)
 
 	r.DELETE(fmt.Sprintf("/api/users/%d", u1.ID))
 	res, _ := r.Run(Router())
 	assert.Equal(t, http.StatusOK, res.Status())
 }
 
-func createUser(name string, email string) gruff.User {
+func createUser(name string, username string, email string) gruff.User {
 	u := gruff.User{
 		Name:     name,
+		Username: username,
 		Email:    email,
 		Password: "123456",
 	}

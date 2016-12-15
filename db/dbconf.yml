@@ -2,6 +2,10 @@ development:
   driver: postgres
   open: dbname=gruff sslmode=disable
 
+data:
+  driver: postgres
+  open: dbname=gruff_data sslmode=disable
+
 staging:
   driver: postgres
   open: dbname=gruff sslmode=disable

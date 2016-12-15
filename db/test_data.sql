@@ -46,3 +46,31 @@ INSERT INTO "debates" ("created_by_id","truth","description","title") VALUES ('1
 
 INSERT INTO "arguments" ("created_by_id", "argument_id","debate_id","type","relevance","impact","description","title") SELECT 1, a1.id, d2.id, 6, 1.0, 0.5, '', 'Cuba''s attempts at helping Ethiopia ended in disaster' FROM arguments a1 LEFT JOIN debates d2 ON d2.title = 'During the reign of Fidel Castro, Cuba''s attempts at helping Ethiopia ended in disaster' WHERE a1.title = 'During his reign, Cuba was instrumental in the liberation of many African nations';
 
+
+
+
+
+
+
+-- Root Con-truth Arguments
+
+INSERT INTO "debates" ("created_by_id","truth","description","title") VALUES ('1','0.5','','Fidel Castro executed thousands of people for being political dissidents');
+
+INSERT INTO "arguments" ("created_by_id", "parent_id","debate_id","type","relevance","impact","description","title") SELECT 1, d1.id, d2.id, 2, 1.0, 0.5, '', 'He executed thousands of people for being political dissidents' FROM debates d1 LEFT JOIN debates d2 ON d2.title = 'Fidel Castro executed thousands of people for being political dissidents' WHERE d1.title = 'Fidel Castro deserves to be praised for his legacy';
+
+-- Execution Pro-truth Arguments
+
+INSERT INTO "debates" ("created_by_id","truth","description","title") VALUES ('1','0.5','','The Victims of Communism Memorial Foundation estimates 73,000 were killed since Fidel Castro came to power in 1959, until the time of his death');
+
+INSERT INTO "arguments" ("created_by_id", "parent_id","debate_id","type","relevance","impact","description","title") SELECT 1, d1.id, d2.id, 1, 1.0, 0.5, '', 'The Victims of Communism Memorial Foundation estimates 73,000 were killed since Castro came to power in 1959' FROM debates d1 LEFT JOIN debates d2 ON d2.title = 'The Victims of Communism Memorial Foundation estimates 73,000 were killed since Fidel Castro came to power in 1959, until the time of his death' WHERE d1.title = 'Fidel Castro executed thousands of people for being political dissidents';
+
+INSERT INTO "links" ("created_by_id", "description", "title", "url", "debate_id") SELECT 1, '', 'Fidel Castro''s Legacy of Murder and Repression Whitewashed by the Left', 'http://www.theaustralian.com.au/opinion/columnists/janet-albrechtsen/fidel-castros-legacy-of-murder-and-repression-whitewashed-by-the-left/news-story/8e12657fc5a8fa70fdae9e5ba6f5daff', d.id FROM debates d WHERE title = 'The Victims of Communism Memorial Foundation estimates 73,000 were killed since Fidel Castro came to power in 1959, until the time of his death';
+
+-- Execution Con-impact Arguments
+
+INSERT INTO "debates" ("created_by_id","truth","description","title") VALUES ('1','0.5','While Castro may be rightly criticised for executing Batista supporters, even those guilty of torture and multiple murder, it may be salutary to remember that back then, in 1959, Britain executed people accused of a single murder. It was also a time when British forces were imprisoning and torturing Kenyans, and those of the French multiparty democracy were torturing and killing Algerians. Even those crimes pale before the horrors the US multiparty democracy was shortly to unleash on Vietnam.','The executions following Fidel Castro''s rise to power were necessary, and were minor in comparison to other atrocities committed by nations at that time.');
+
+INSERT INTO "arguments" ("created_by_id", "argument_id","debate_id","type","relevance","impact","description","title") SELECT 1, a1.id, d2.id, 6, 1.0, 0.5, '', 'The executions were minor in comparison to what was happening in the world at the time' FROM arguments a1 LEFT JOIN debates d2 ON d2.title = 'The executions following Fidel Castro''s rise to power were necessary, and were minor in comparison to other atrocities committed by nations at that time.' WHERE a1.title = 'He executed thousands of people for being political dissidents';
+
+INSERT INTO "links" ("created_by_id", "description", "title", "url", "debate_id") SELECT 1, '', 'A Look at Fidel Castro''s Legacy from a Fair Perspective', 'https://www.theguardian.com/world/2016/nov/29/look-at-fidel-castro-legacy-from-a-fair-perspective', d.id FROM debates d WHERE title = 'The executions following Fidel Castro''s rise to power were necessary, and were minor in comparison to other atrocities committed by nations at that time.';
+

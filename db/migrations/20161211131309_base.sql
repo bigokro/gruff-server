@@ -72,7 +72,7 @@ CREATE UNIQUE INDEX uix_users_username ON users USING btree (username);
 -- Table Debates
 --
 CREATE TABLE debates (
-    id uuid NOT NULL,
+    id uuid NOT NULL DEFAULT uuid_generate_v4(),
     created_by_id integer NOT NULL,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
@@ -95,7 +95,7 @@ CREATE INDEX idx_debates_created_by_id ON debates USING btree (created_by_id);
 -- Table Arguments
 -- 
 CREATE TABLE arguments (
-    id uuid NOT NULL,
+    id uuid NOT NULL DEFAULT uuid_generate_v4(),
     created_by_id integer NOT NULL,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
@@ -221,7 +221,7 @@ CREATE INDEX idx_argument_opinions_argument_id ON argument_opinions USING btree 
 -- Table Links
 -- 
 CREATE TABLE links (
-    id uuid NOT NULL,
+    id uuid NOT NULL DEFAULT uuid_generate_v4(),
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     deleted_at timestamp with time zone,

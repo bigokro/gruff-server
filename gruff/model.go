@@ -8,7 +8,7 @@ import (
 )
 
 type Model struct {
-	ID        uint       `json:"id" gorm:"primary_key"`
+	ID        uint64     `json:"id" gorm:"primary_key"`
 	CreatedAt time.Time  `json:"-" sql:"DEFAULT:current_timestamp"`
 	UpdatedAt time.Time  `json:"-" sql:"DEFAULT:current_timestamp"`
 	DeletedAt *time.Time `json:"-" settable:"false"`

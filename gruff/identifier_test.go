@@ -1,7 +1,7 @@
 package gruff
 
 import (
-	"github.com/satori/go.uuid"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"reflect"
 	"testing"
@@ -28,4 +28,11 @@ func TestIdentifierGenerateUUID(t *testing.T) {
 
 	assert.True(t, (&d).GenerateUUID() != ZERO_UUID)
 	assert.True(t, d.ID != ZERO_UUID)
+}
+
+func TestSetCreatedBy(t *testing.T) {
+	d := Debate{}
+	SetCreatedByID(&d, 44)
+
+	assert.Equal(t, uint64(44), d.CreatedByID)
 }

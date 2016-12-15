@@ -1,8 +1,9 @@
 package api
 
 import (
-	_ "fmt"
+	"fmt"
 	"github.com/bigokro/gruff-server/gruff"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo"
 	"net/http"
@@ -42,6 +43,15 @@ func (ctx *Context) Create(c echo.Context) error {
 	valerr := BasicValidationForCreate(ctx, c, item)
 	if valerr != nil {
 		return valerr
+	}
+
+	if gruff.IsIdentifier(ctx.Type) {
+		// TODO: extract to middleware
+		user := c.Get("user").(*jwt.Token)
+		claims := user.Claims.(jwt.MapClaims)
+		fmt.Printf("Claims: %+v\n", claims)
+		id := claims["id"].(float64)
+		gruff.SetCreatedByID(item, uint64(id))
 	}
 
 	dberr := ctx.Database.Create(item).Error

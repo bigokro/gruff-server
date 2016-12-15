@@ -111,11 +111,12 @@ func createArgumentOpinion(db *gorm.DB) gruff.ArgumentOpinion {
 	db.Create(&d1)
 	db.Create(&d2)
 
+	nid := gruff.NullableUUID(d1.ID)
 	a := gruff.Argument{
 		Title:       "arguments",
 		Description: "arguments",
 		Type:        gruff.ARGUMENT_TYPE_PRO_TRUTH,
-		ParentID:    d1.ID,
+		ParentID:    &nid,
 		DebateID:    d2.ID,
 	}
 	db.Create(&a)

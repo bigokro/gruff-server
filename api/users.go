@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"github.com/bigokro/gruff-server/gruff"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
@@ -10,8 +11,12 @@ import (
 )
 
 type jwtCustomClaims struct {
-	Name string `json:"name"`
-	Type uint   `json:"type"`
+	ID       uint64 `json:"id"`
+	Name     string `json:"name"`
+	Username string `json:"username"`
+	Image    string `json:"img"`
+	Curator  bool   `json:"curator"`
+	Admin    bool   `json:"admin"`
 	jwt.StandardClaims
 }
 
@@ -54,12 +59,18 @@ func (ctx *Context) SignIn(c echo.Context) error {
 		if ok, _ := verifyPassword(user, u.Password); ok {
 
 			claims := &jwtCustomClaims{
-				u.Email,
-				0,
+				user.ID,
+				user.Name,
+				user.Username,
+				user.Image,
+				user.Curator,
+				user.Admin,
 				jwt.StandardClaims{
 					ExpiresAt: time.Now().Add(time.Hour * 72).Unix(),
 				},
 			}
+
+			fmt.Println("Claims:", claims)
 
 			token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 

@@ -8,21 +8,6 @@ import (
 	"os"
 )
 
-var INITDB *gorm.DB
-var TESTDB *gorm.DB
-
-func init() {
-	INITDB = InitTestDB()
-}
-
-func setupDB() {
-	TESTDB = INITDB.Begin()
-}
-
-func teardownDB() {
-	TESTDB = TESTDB.Rollback()
-}
-
 func InitTestDB() *gorm.DB {
 	if os.Getenv("GRUFF_DB") == "" {
 		os.Setenv("GRUFF_DB", "dbname=gruff_test sslmode=disable")

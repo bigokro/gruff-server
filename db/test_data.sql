@@ -66,6 +66,57 @@ INSERT INTO "arguments" ("created_by_id", "parent_id","debate_id","type","releva
 
 INSERT INTO "links" ("created_by_id", "description", "title", "url", "debate_id") SELECT 1, '', 'Cuba Leader Fidel Castro Dead at 90', 'http://www.aljazeera.com/news/americas/2016/11/cuba-leader-fidel-castro-dead-90-161126053354637.html', d.id FROM debates d WHERE title = 'Fidel Castro is as revered by the Cuban people as Che Guevara';
 
+-- Back to Root Pro-truth
+
+INSERT INTO "debates" ("created_by_id","truth","description","title") VALUES ('1','0.5','','Fidel Castro created a more egalitarian society in Cuba');
+
+INSERT INTO "arguments" ("created_by_id", "parent_id","debate_id","type","relevance","impact","description","title") SELECT 1, d1.id, d2.id, 1, 1.0, 0.5, '', 'He created a more egalitarian society in Cuba' FROM debates d1 LEFT JOIN debates d2 ON d2.title = 'Fidel Castro created a more egalitarian society in Cuba' WHERE d1.title = 'Fidel Castro deserves to be praised for his legacy';
+
+-- Egalitarian Pro-truth arguments
+
+INSERT INTO "debates" ("created_by_id","truth","description","title") VALUES ('1','0.5','','The Batista regime in Cuba served only Batist''s own interests and those of the wealthy');
+
+INSERT INTO "arguments" ("created_by_id", "parent_id","debate_id","type","relevance","impact","description","title") SELECT 1, d1.id, d2.id, 1, 1.0, 0.5, '', 'His regime replaced the Batista regime, a dictator that served his own interests and those of the wealthy' FROM debates d1 LEFT JOIN debates d2 ON d2.title = 'The Batista regime in Cuba served only Batist''s own interests and those of the wealthy' WHERE d1.title = 'Fidel Castro created a more egalitarian society in Cuba';
+
+INSERT INTO "debates" ("created_by_id","truth","description","title") VALUES ('1','0.5','','Fidel Castro implemented agrarian reform in Cuba that resulted in more economic equality');
+
+INSERT INTO "arguments" ("created_by_id", "parent_id","debate_id","type","relevance","impact","description","title") SELECT 1, d1.id, d2.id, 1, 1.0, 0.5, '', 'He implemented agrarian reform in Cuba that resulted in more economic equality' FROM debates d1 LEFT JOIN debates d2 ON d2.title = 'Fidel Castro implemented agrarian reform in Cuba that resulted in more economic equality' WHERE d1.title = 'Fidel Castro created a more egalitarian society in Cuba';
+
+INSERT INTO "debates" ("created_by_id","truth","description","title") VALUES ('1','0.5','','Fidel Castro ended homelessness in Cuba');
+
+INSERT INTO "arguments" ("created_by_id", "parent_id","debate_id","type","relevance","impact","description","title") SELECT 1, d1.id, d2.id, 1, 1.0, 0.5, '', 'He ended homelessness in Cuba' FROM debates d1 LEFT JOIN debates d2 ON d2.title = 'Fidel Castro ended homelessness in Cuba' WHERE d1.title = 'Fidel Castro created a more egalitarian society in Cuba';
+
+-- Ended homelessness Pro-truth arguments
+
+INSERT INTO "debates" ("created_by_id","truth","description","title") VALUES ('1','0.5','','you don''t see anyone living on the street. Everyone has a house');
+
+INSERT INTO "arguments" ("created_by_id", "parent_id","debate_id","type","relevance","impact","description","title") SELECT 1, d1.id, d2.id, 1, 1.0, 0.5, '', 'you don''t see anyone living on the street. Everyone has a house' FROM debates d1 LEFT JOIN debates d2 ON d2.title = 'you don''t see anyone living on the street. Everyone has a house' WHERE d1.title = 'Fidel Castro ended homelessness in Cuba';
+
+INSERT INTO "links" ("created_by_id", "description", "title", "url", "debate_id") SELECT 1, '', 'Cuba Leader Fidel Castro Dead at 90', 'http://www.aljazeera.com/news/americas/2016/11/cuba-leader-fidel-castro-dead-90-161126053354637.html', d.id FROM debates d WHERE title = 'you don''t see anyone living on the street. Everyone has a house';
+
+-- Back to Egalitarian Pro-truth arguments
+
+INSERT INTO "debates" ("created_by_id","truth","description","title") VALUES ('1','0.5','','In spite of hardships, the population is content due to the egalitarian nature of society in Cuba');
+
+INSERT INTO "arguments" ("created_by_id", "parent_id","debate_id","type","relevance","impact","description","title") SELECT 1, d1.id, d2.id, 1, 1.0, 0.5, '', 'In spite of hardships, the population is content due to the egalitarian nature of society' FROM debates d1 LEFT JOIN debates d2 ON d2.title = 'In spite of hardships, the population is content due to the egalitarian nature of society in Cuba' WHERE d1.title = 'Fidel Castro created a more egalitarian society in Cuba';
+
+-- Contented with society Pro-truth arguments
+
+INSERT INTO "debates" ("created_by_id","truth","description","title") VALUES ('1','0.5','"Our visit this month confirmed our belief that in Cuba, despite the hardships that the people have to endure, the majority of the population are cheerful, friendly and content with the egalitarian system that Castro introduced."','The Guardian reports that the population is generally content with the egalitarian nature of Cuba');
+
+INSERT INTO "arguments" ("created_by_id", "parent_id","debate_id","type","relevance","impact","description","title") SELECT 1, d1.id, d2.id, 1, 1.0, 0.5, '', 'According to The Guardian, the population of Cuba is content' FROM debates d1 LEFT JOIN debates d2 ON d2.title = 'The Guardian reports that the population is generally content with the egalitarian nature of Cuba' WHERE d1.title = 'In spite of hardships, the population is content due to the egalitarian nature of society in Cuba';
+
+INSERT INTO "links" ("created_by_id", "description", "title", "url", "debate_id") SELECT 1, '', 'Cuba Leader Fidel Castro Dead at 90', 'http://www.aljazeera.com/news/americas/2016/11/cuba-leader-fidel-castro-dead-90-161126053354637.html', d.id FROM debates d WHERE title = 'The Guardian reports that the population is generally content with the egalitarian nature of Cuba';
+
+-- Egalitarian Con-truth arguments
+
+INSERT INTO "debates" ("created_by_id","truth","description","title") VALUES ('1','0.5','"It became clear very quickly after the revolution that while all Cubans were equal, some were more equal than others. And that is why, while ordinary Cubans scrape for crumbs, the privileged communists in Castro’s nomenklatura live like millionaires."','Even in Fidel Castro''s Cuba, not all people are treated equally');
+
+INSERT INTO "arguments" ("created_by_id", "parent_id","debate_id","type","relevance","impact","description","title") SELECT 1, d1.id, d2.id, 2, 1.0, 0.5, '', 'Even in Cuba, the government plays with favoritism' FROM debates d1 LEFT JOIN debates d2 ON d2.title = 'Even in Fidel Castro''s Cuba, not all people are treated equally' WHERE d1.title = 'Fidel Castro created a more egalitarian society in Cuba';
+
+INSERT INTO "links" ("created_by_id", "description", "title", "url", "debate_id") SELECT 1, '', 'Monster Fidel Castro Leaves Blood of Innocents in his Wake', 'http://www.breitbart.com/national-security/2016/11/27/glazov-monster-fidel-castro-leaves-blood-innocents-wake/', d.id FROM debates d WHERE title = 'Even in Fidel Castro''s Cuba, not all people are treated equally';
+
+
 
 
 

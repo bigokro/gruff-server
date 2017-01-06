@@ -33,6 +33,7 @@ func (ctx *Context) DialDatabase(next echo.HandlerFunc) echo.HandlerFunc {
 		if !ctx.Test {
 			db := RW_DB_POOL.Begin()
 			defer db.Commit()
+			db.LogMode(true)
 
 			ctx.Database = db
 			ctx.Payload = make(map[string]interface{})

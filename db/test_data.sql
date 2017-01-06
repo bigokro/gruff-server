@@ -116,6 +116,33 @@ INSERT INTO "arguments" ("created_by_id", "parent_id","debate_id","type","releva
 
 INSERT INTO "links" ("created_by_id", "description", "title", "url", "debate_id") SELECT 1, '', 'Monster Fidel Castro Leaves Blood of Innocents in his Wake', 'http://www.breitbart.com/national-security/2016/11/27/glazov-monster-fidel-castro-leaves-blood-innocents-wake/', d.id FROM debates d WHERE title = 'Even in Fidel Castro''s Cuba, not all people are treated equally';
 
+-- Back to Root Pro-truth
+
+INSERT INTO "debates" ("created_by_id","truth","description","title") VALUES ('1','0.5','','Fidel Castro serves as inspiration to all nations that feel a need to stand up to bullying nations like the United States');
+
+INSERT INTO "arguments" ("created_by_id", "parent_id","debate_id","type","relevance","impact","description","title") SELECT 1, d1.id, d2.id, 1, 1.0, 0.5, '', 'He serves as inspiration to all nations that feel a need to stand up to bullying nations like the United States' FROM debates d1 LEFT JOIN debates d2 ON d2.title = 'Fidel Castro serves as inspiration to all nations that feel a need to stand up to bullying nations like the United States' WHERE d1.title = 'Fidel Castro deserves to be praised for his legacy';
+
+-- Inspiration Pro-truth arguments
+
+INSERT INTO "debates" ("created_by_id","truth","description","title") VALUES ('1','0.5','He had the ability to face - together with his people - the most powerful enemy on earth. And I think [his] ideas will live on forever.','Fidel Castro had the ability to face - together with his people - the most powerful enemy on earth.');
+
+INSERT INTO "arguments" ("created_by_id", "parent_id","debate_id","type","relevance","impact","description","title") SELECT 1, d1.id, d2.id, 1, 1.0, 0.5, '', 'He had the ability to face - together with his people - the most powerful enemy on earth.' FROM debates d1 LEFT JOIN debates d2 ON d2.title = 'Fidel Castro had the ability to face - together with his people - the most powerful enemy on earth.' WHERE d1.title = 'Fidel Castro serves as inspiration to all nations that feel a need to stand up to bullying nations like the United States';
+
+INSERT INTO "links" ("created_by_id", "description", "title", "url", "debate_id") SELECT 1, '', 'Cuba Leader Fidel Castro Dead at 90', 'http://www.aljazeera.com/news/americas/2016/11/cuba-leader-fidel-castro-dead-90-161126053354637.html', d.id FROM debates d WHERE title = 'Fidel Castro had the ability to face - together with his people - the most powerful enemy on earth.';
+
+-- Back to Root Pro-truth
+
+INSERT INTO "debates" ("created_by_id","truth","description","title") VALUES ('1','0.5','','Fidel Castro sent Cuban doctors to third world countries to help improve health conditions');
+
+INSERT INTO "arguments" ("created_by_id", "parent_id","debate_id","type","relevance","impact","description","title") SELECT 1, d1.id, d2.id, 1, 1.0, 0.5, '', 'He sent Cuban doctors to third world countries to help improve health conditions' FROM debates d1 LEFT JOIN debates d2 ON d2.title = 'Fidel Castro sent Cuban doctors to third world countries to help improve health conditions' WHERE d1.title = 'Fidel Castro deserves to be praised for his legacy';
+
+-- Inspiration Pro-truth arguments
+
+INSERT INTO "debates" ("created_by_id","truth","description","title") VALUES ('1','0.5','"...sending Cuba''s doctors to heal the Third World''s sick"','A Fox News article mentions that Fidel Castro sent Cuban doctors to other countries to help with their health system');
+
+INSERT INTO "arguments" ("created_by_id", "parent_id","debate_id","type","relevance","impact","description","title") SELECT 1, d1.id, d2.id, 1, 1.0, 0.5, '', 'He did, according to at least on Fox News article' FROM debates d1 LEFT JOIN debates d2 ON d2.title = 'A Fox News article mentions that Fidel Castro sent Cuban doctors to other countries to help with their health system' WHERE d1.title = 'Fidel Castro sent Cuban doctors to third world countries to help improve health conditions';
+
+INSERT INTO "links" ("created_by_id", "description", "title", "url", "debate_id") SELECT 1, 'An article from Fox News discussing the many impacts Fidel Castro had on life in Cuba', 'From Milk to Lightbulbs Fidel Castro Reshaped Life in Cuba', 'http://www.foxnews.com/world/2016/11/28/from-milk-to-lightbulbs-fidel-castro-reshaped-life-in-cuba.html', d.id FROM debates d WHERE title = 'A Fox News article mentions that Fidel Castro sent Cuban doctors to other countries to help with their health system';
 
 
 

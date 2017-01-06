@@ -60,6 +60,24 @@ func (u *NullableUUID) Value() (driver.Value, error) {
 	return u.MarshalText()
 }
 
+// Setting from DB via Gorm
+func (u *NullableUUID) Scan(value interface{}) error {
+	if u == nil {
+		return nil
+	} else {
+		if value != nil {
+			ub := value.([]byte)
+			up, err := uuid.ParseBytes(ub)
+			if err != nil {
+				return err
+			}
+			un := NullableUUID(up)
+			u = &un
+		}
+	}
+	return nil
+}
+
 // MarshalText helps convert to value for JSON
 func (u *NullableUUID) MarshalText() ([]byte, error) {
 	if u == nil || len(*u) == 0 {

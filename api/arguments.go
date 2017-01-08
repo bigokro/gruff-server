@@ -12,6 +12,77 @@ func Arguments(c echo.Context) error {
 	return c.String(http.StatusOK, "Arguments")
 }
 
+func (ctx *Context) GetArgument(c echo.Context) error {
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.String(http.StatusNotFound, "NotFound")
+		return err
+	}
+
+	argument := gruff.Argument{}
+
+	db := ctx.Database
+	db = db.Preload("Debate")
+	db = db.Preload("Debate.Links")
+	db = db.Preload("Debate.Contexts")
+	db = db.Preload("Debate.Values")
+	db = db.Preload("Debate.Tags")
+	db = db.Preload("Parent")
+	db = db.Preload("Parent.Links")
+	db = db.Preload("Parent.Contexts")
+	db = db.Preload("Parent.Values")
+	db = db.Preload("Parent.Tags")
+	db = db.Preload("Argument")
+	db = db.Preload("Argument.Debate")
+	err = db.Where("id = ?", id).First(&argument).Error
+	if err != nil {
+		c.String(http.StatusNotFound, "NotFound")
+		return err
+	}
+
+	proRel := []gruff.Argument{}
+	db = ctx.Database
+	db = db.Where("type = ?", gruff.ARGUMENT_TYPE_PRO_RELEVANCE)
+	err = db.Where("argument_id = ?", id).Find(&proRel).Error
+	if err != nil {
+		c.String(http.StatusInternalServerError, "ServerError")
+		return err
+	}
+	argument.ProRelevance = proRel
+
+	conRel := []gruff.Argument{}
+	db = ctx.Database
+	db = db.Where("type = ?", gruff.ARGUMENT_TYPE_CON_RELEVANCE)
+	err = db.Where("argument_id = ?", id).Find(&conRel).Error
+	if err != nil {
+		c.String(http.StatusInternalServerError, "ServerError")
+		return err
+	}
+	argument.ConRelevance = conRel
+
+	proImpact := []gruff.Argument{}
+	db = ctx.Database
+	db = db.Where("type = ?", gruff.ARGUMENT_TYPE_PRO_IMPACT)
+	err = db.Where("argument_id = ?", id).Find(&proImpact).Error
+	if err != nil {
+		c.String(http.StatusInternalServerError, "ServerError")
+		return err
+	}
+	argument.ProImpact = proImpact
+
+	conImpact := []gruff.Argument{}
+	db = ctx.Database
+	db = db.Where("type = ?", gruff.ARGUMENT_TYPE_CON_IMPACT)
+	err = db.Where("argument_id = ?", id).Find(&conImpact).Error
+	if err != nil {
+		c.String(http.StatusInternalServerError, "ServerError")
+		return err
+	}
+	argument.ConImpact = conImpact
+
+	return c.JSON(http.StatusOK, argument)
+}
+
 func (ctx *Context) MoveArgument(c echo.Context) error {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -49,7 +120,7 @@ func (ctx *Context) MoveArgument(c echo.Context) error {
 			return err
 		}
 
-		newIdN := gruff.NullableUUID(newId)
+		newIdN := gruff.NullableUUID{newId}
 		arg.ParentID = &newIdN
 		arg.Parent = &newDebate
 		arg.ArgumentID = nil
@@ -62,7 +133,7 @@ func (ctx *Context) MoveArgument(c echo.Context) error {
 			return err
 		}
 
-		newIdN := gruff.NullableUUID(newId)
+		newIdN := gruff.NullableUUID{newId}
 		arg.ArgumentID = &newIdN
 		arg.Argument = &newArg
 		arg.ParentID = nil

@@ -43,7 +43,7 @@ type Argument struct {
 	ArgumentID   *NullableUUID `json:"argumentId,omitempty" sql:"type:uuid"`
 	Argument     *Argument     `json:"argument,omitempty"`
 	DebateID     uuid.UUID     `json:"debateId" sql:"type:uuid;not null"`
-	Debate       Debate        `json:"debate"`
+	Debate       *Debate       `json:"debate,omitempty"`
 	Title        string        `json:"title" sql:"not null" valid:"length(3|1000)"`
 	Description  string        `json:"desc" valid:"length(3|4000)"`
 	Type         int           `json:"type" sql:"not null"`

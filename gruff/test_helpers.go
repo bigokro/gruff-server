@@ -59,4 +59,14 @@ func runMigration(db *gorm.DB) {
 	if err := db.AutoMigrate(values...).Error; err != nil {
 		panic(fmt.Sprintf("No error should happen when create table, but got %+v", err))
 	}
+
+	// Association tables
+	db.Exec("DROP TABLE IF EXISTS debate_contexts;")
+	db.Exec("DROP TABLE IF EXISTS debate_values;")
+	db.Exec("DROP TABLE IF EXISTS debate_tags;")
+
+	db.Exec("CREATE TABLE debate_contexts (context_id integer NOT NULL, debate_id uuid NOT NULL);")
+	db.Exec("CREATE TABLE debate_values (value_id integer NOT NULL, debate_id uuid NOT NULL);")
+	db.Exec("CREATE TABLE debate_tags (tag_id integer NOT NULL, debate_id uuid NOT NULL);")
+
 }

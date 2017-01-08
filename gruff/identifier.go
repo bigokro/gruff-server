@@ -50,14 +50,17 @@ func IsIdentifier(t reflect.Type) bool {
 }
 
 // NullableUUID wrapper to fix nullable UUID. See https://github.com/golang/go/issues/8415
-type NullableUUID uuid.UUID
+type NullableUUID struct {
+	UUID uuid.UUID
+}
 
 // Value implements Sql/Value so it can be converted to DB value
 func (u *NullableUUID) Value() (driver.Value, error) {
-	if u == nil || len(*u) == 0 {
+	if u == nil {
 		return nil, nil
 	}
-	return u.MarshalText()
+
+	return u.UUID.Value()
 }
 
 // Setting from DB via Gorm
@@ -71,8 +74,7 @@ func (u *NullableUUID) Scan(value interface{}) error {
 			if err != nil {
 				return err
 			}
-			un := NullableUUID(up)
-			u = &un
+			u.UUID = up
 		}
 	}
 	return nil
@@ -80,10 +82,10 @@ func (u *NullableUUID) Scan(value interface{}) error {
 
 // MarshalText helps convert to value for JSON
 func (u *NullableUUID) MarshalText() ([]byte, error) {
-	if u == nil || len(*u) == 0 {
+	if u == nil {
 		return nil, nil
 	}
-	return uuid.UUID(*u).MarshalText()
+	return u.UUID.MarshalText()
 }
 
 // UnmarshalText helps convert to value for JSON
@@ -97,6 +99,6 @@ func (u *NullableUUID) UnmarshalText(data []byte) error {
 		return err
 	}
 
-	*u = NullableUUID(parsed)
+	u.UUID = parsed
 	return nil
 }

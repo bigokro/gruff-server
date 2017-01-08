@@ -44,7 +44,7 @@ func TestListLinksPagination(t *testing.T) {
 	assert.Equal(t, http.StatusOK, res.Status())
 }
 
-func TestGetLinks(t *testing.T) {
+func TestGetLink(t *testing.T) {
 	setup()
 	defer teardown()
 
@@ -55,13 +55,14 @@ func TestGetLinks(t *testing.T) {
 
 	expectedResults, _ := json.Marshal(u1)
 
-	r.GET(fmt.Sprintf("/api/links/%d", u1.ID))
+	fmt.Printf("/api/links/%s\n", u1.ID)
+	r.GET(fmt.Sprintf("/api/links/%s", u1.ID))
 	res, _ := r.Run(Router())
 	assert.Equal(t, string(expectedResults), res.Body.String())
 	assert.Equal(t, http.StatusOK, res.Status())
 }
 
-func TestCreateLinks(t *testing.T) {
+func TestCreateLink(t *testing.T) {
 	setup()
 	defer teardown()
 
@@ -75,7 +76,7 @@ func TestCreateLinks(t *testing.T) {
 	assert.Equal(t, http.StatusCreated, res.Status())
 }
 
-func TestUpdateLinks(t *testing.T) {
+func TestUpdateLink(t *testing.T) {
 	setup()
 	defer teardown()
 
@@ -84,13 +85,13 @@ func TestUpdateLinks(t *testing.T) {
 	u1 := createLink()
 	TESTDB.Create(&u1)
 
-	r.PUT(fmt.Sprintf("/api/links/%d", u1.ID))
+	r.PUT(fmt.Sprintf("/api/links/%s", u1.ID))
 	r.SetBody(u1)
 	res, _ := r.Run(Router())
 	assert.Equal(t, http.StatusAccepted, res.Status())
 }
 
-func TestDeleteLinks(t *testing.T) {
+func TestDeleteLink(t *testing.T) {
 	setup()
 	defer teardown()
 	r := New(Token)
@@ -98,7 +99,7 @@ func TestDeleteLinks(t *testing.T) {
 	u1 := createLink()
 	TESTDB.Create(&u1)
 
-	r.DELETE(fmt.Sprintf("/api/links/%d", u1.ID))
+	r.DELETE(fmt.Sprintf("/api/links/%s", u1.ID))
 	res, _ := r.Run(Router())
 	assert.Equal(t, http.StatusOK, res.Status())
 }

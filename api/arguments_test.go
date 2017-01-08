@@ -44,7 +44,7 @@ func TestListArgumentsPagination(t *testing.T) {
 	assert.Equal(t, http.StatusOK, res.Status())
 }
 
-func TestGetArguments(t *testing.T) {
+func TestGetArgument(t *testing.T) {
 	setup()
 	defer teardown()
 
@@ -55,7 +55,7 @@ func TestGetArguments(t *testing.T) {
 
 	expectedResults, _ := json.Marshal(u1)
 
-	r.GET(fmt.Sprintf("/api/arguments/%d", u1.ID))
+	r.GET(fmt.Sprintf("/api/arguments/%s", u1.ID))
 	res, _ := r.Run(Router())
 	assert.Equal(t, string(expectedResults), res.Body.String())
 	assert.Equal(t, http.StatusOK, res.Status())
@@ -75,7 +75,7 @@ func TestCreateArguments(t *testing.T) {
 	assert.Equal(t, http.StatusCreated, res.Status())
 }
 
-func TestUpdateArguments(t *testing.T) {
+func TestUpdateArgument(t *testing.T) {
 	setup()
 	defer teardown()
 
@@ -84,13 +84,13 @@ func TestUpdateArguments(t *testing.T) {
 	u1 := createArgument()
 	TESTDB.Create(&u1)
 
-	r.PUT(fmt.Sprintf("/api/arguments/%d", u1.ID))
+	r.PUT(fmt.Sprintf("/api/arguments/%s", u1.ID))
 	r.SetBody(u1)
 	res, _ := r.Run(Router())
 	assert.Equal(t, http.StatusAccepted, res.Status())
 }
 
-func TestDeleteArguments(t *testing.T) {
+func TestDeleteArgument(t *testing.T) {
 	setup()
 	defer teardown()
 	r := New(Token)
@@ -98,7 +98,7 @@ func TestDeleteArguments(t *testing.T) {
 	u1 := createArgument()
 	TESTDB.Create(&u1)
 
-	r.DELETE(fmt.Sprintf("/api/arguments/%d", u1.ID))
+	r.DELETE(fmt.Sprintf("/api/arguments/%s", u1.ID))
 	res, _ := r.Run(Router())
 	assert.Equal(t, http.StatusOK, res.Status())
 }

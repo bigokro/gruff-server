@@ -33,6 +33,14 @@ func teardown() {
 	TESTDB = TESTDB.Rollback()
 }
 
+func startDBLog() {
+	TESTDB.LogMode(true)
+}
+
+func stopDBLog() {
+	TESTDB.LogMode(false)
+}
+
 func Router() *echo.Echo {
 	return SetUpRouter(true, TESTDB)
 }

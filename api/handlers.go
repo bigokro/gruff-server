@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 	"github.com/bigokro/gruff-server/gruff"
 	"github.com/dgrijalva/jwt-go"
@@ -49,9 +50,11 @@ func (ctx *Context) Create(c echo.Context) error {
 		// TODO: extract to middleware
 		user := c.Get("user").(*jwt.Token)
 		claims := user.Claims.(jwt.MapClaims)
-		fmt.Printf("Claims: %+v\n", claims)
-		id := claims["id"].(float64)
-		gruff.SetCreatedByID(item, uint64(id))
+		//fmt.Printf("Claims: %+v\n", claims)
+		if claims["id"] != nil {
+			id := claims["id"].(float64)
+			gruff.SetCreatedByID(item, uint64(id))
+		}
 	}
 
 	dberr := ctx.Database.Create(item).Error
@@ -63,19 +66,19 @@ func (ctx *Context) Create(c echo.Context) error {
 }
 
 func (ctx *Context) Get(c echo.Context) error {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
+	id := c.Param("id")
+	if id == "" {
 		c.String(http.StatusNotFound, "NotFound")
-		return err
+		return errors.New("Not found")
 	}
 
 	item := reflect.New(ctx.Type).Interface()
 
 	db := ctx.Database
 	db = BasicJoins(ctx, c, db)
-	db = BasicFetch(ctx, c, db, id)
+	//db = BasicFetch(ctx, c, db, id)
 
-	err = db.First(item, id).Error
+	err := db.Where("id = ?", id).First(item).Error
 	if err != nil {
 		c.String(http.StatusNotFound, "NotFound")
 		return err
@@ -105,7 +108,7 @@ func (ctx *Context) GetParent(c echo.Context) error {
 		db = BasicFetch(ctx, c, db, id)
 	}
 
-	err = db.First(item, id).Error
+	err = db.Where("id = ?", id).First(item).Error
 	if err != nil {
 		c.String(http.StatusNotFound, "NotFound")
 		return err
@@ -115,14 +118,14 @@ func (ctx *Context) GetParent(c echo.Context) error {
 }
 
 func (ctx *Context) Update(c echo.Context) error {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
+	id := c.Param("id")
+	if id == "" {
 		c.String(http.StatusNotFound, "NotFound")
-		return err
+		return errors.New("Not Found")
 	}
 
 	item := reflect.New(ctx.Type).Interface()
-	err = ctx.Database.First(item, id).Error
+	err := ctx.Database.Where("id = ?", id).First(item).Error
 	if err != nil {
 		c.String(http.StatusNotFound, "NotFound")
 		return err
@@ -146,15 +149,16 @@ func (ctx *Context) Update(c echo.Context) error {
 }
 
 func (ctx *Context) Delete(c echo.Context) error {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
+	id := c.Param("id")
+	if id == "" {
 		c.String(http.StatusNotFound, "NotFound")
-		return err
+		return errors.New("Not Found")
 	}
 
 	item := reflect.New(ctx.Type).Interface()
-	err = ctx.Database.First(item, id).Error
+	err := ctx.Database.Where("id = ?", id).First(item).Error
 	if err != nil {
+		fmt.Println("It didn't find anything")
 		c.String(http.StatusNotFound, "NotFound")
 		return err
 	}
@@ -168,14 +172,14 @@ func (ctx *Context) Delete(c echo.Context) error {
 }
 
 func (ctx *Context) Destroy(c echo.Context) error {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
+	id := c.Param("id")
+	if id == "" {
 		c.String(http.StatusNotFound, "NotFound")
-		return err
+		return errors.New("Not Found")
 	}
 
 	item := reflect.New(ctx.Type).Interface()
-	err = ctx.Database.First(item, id).Error
+	err := ctx.Database.Where("id = ?", id).First(item).Error
 	if err != nil {
 		c.String(http.StatusNotFound, "NotFound")
 		return err

@@ -96,9 +96,6 @@ func TestGetDebate(t *testing.T) {
 	TESTDB.Create(&l8)
 	TESTDB.Create(&l9)
 
-	d1.Links = []gruff.Link{l1, l2}
-	d2.Links = []gruff.Link{l3}
-
 	c1 := gruff.Context{Title: "Test", Description: "The debate in question is related to a test"}
 	c2 := gruff.Context{Title: "Valid", Description: "The debate in question is the one we want"}
 	c3 := gruff.Context{Title: "Invalid", Description: "We don't want this"}
@@ -117,9 +114,6 @@ func TestGetDebate(t *testing.T) {
 	TESTDB.Exec("INSERT INTO debate_contexts (context_id, debate_id) VALUES (?, ?)", c3.ID, d7.ID)
 	TESTDB.Exec("INSERT INTO debate_contexts (context_id, debate_id) VALUES (?, ?)", c3.ID, d8.ID)
 	TESTDB.Exec("INSERT INTO debate_contexts (context_id, debate_id) VALUES (?, ?)", c3.ID, d9.ID)
-
-	d1.Contexts = []gruff.Context{c1, c2}
-	d2.Contexts = []gruff.Context{c1, c3}
 
 	v1 := gruff.Value{Title: "Test", Description: "Testing is good"}
 	v2 := gruff.Value{Title: "Correctness", Description: "We want correct code and tests"}
@@ -140,9 +134,6 @@ func TestGetDebate(t *testing.T) {
 	TESTDB.Exec("INSERT INTO debate_values (value_id, debate_id) VALUES (?, ?)", v3.ID, d8.ID)
 	TESTDB.Exec("INSERT INTO debate_values (value_id, debate_id) VALUES (?, ?)", v3.ID, d9.ID)
 
-	d1.Values = []gruff.Value{v1, v2}
-	d2.Values = []gruff.Value{v1, v3}
-
 	t1 := gruff.Tag{Title: "Test"}
 	t2 := gruff.Tag{Title: "Valid"}
 	t3 := gruff.Tag{Title: "Invalid"}
@@ -162,21 +153,18 @@ func TestGetDebate(t *testing.T) {
 	TESTDB.Exec("INSERT INTO debate_tags (tag_id, debate_id) VALUES (?, ?)", t3.ID, d8.ID)
 	TESTDB.Exec("INSERT INTO debate_tags (tag_id, debate_id) VALUES (?, ?)", t3.ID, d9.ID)
 
-	d1.Tags = []gruff.Tag{t1, t2}
-	d2.Tags = []gruff.Tag{t1, t3}
-
 	d1IDNull := gruff.NullableUUID{d1.ID}
 	d2IDNull := gruff.NullableUUID{d2.ID}
 	d3IDNull := gruff.NullableUUID{d3.ID}
 	d4IDNull := gruff.NullableUUID{d4.ID}
-	a3 := gruff.Argument{ParentID: &d1IDNull, DebateID: d3.ID, Type: gruff.ARGUMENT_TYPE_PRO_TRUTH, Title: "Argument 3", Relevance: 0.2309, Impact: 0.0293}
-	a4 := gruff.Argument{ParentID: &d1IDNull, DebateID: d4.ID, Type: gruff.ARGUMENT_TYPE_CON_TRUTH, Title: "Argument 4", Relevance: 0.29, Impact: 0.9823}
-	a5 := gruff.Argument{ParentID: &d1IDNull, DebateID: d5.ID, Type: gruff.ARGUMENT_TYPE_PRO_TRUTH, Title: "Argument 5", Relevance: 0.4893, Impact: 0.100}
-	a6 := gruff.Argument{ParentID: &d2IDNull, DebateID: d6.ID, Type: gruff.ARGUMENT_TYPE_PRO_TRUTH, Title: "Argument 6", Relevance: 0.438, Impact: 0.2398}
-	a7 := gruff.Argument{ParentID: &d2IDNull, DebateID: d7.ID, Type: gruff.ARGUMENT_TYPE_CON_TRUTH, Title: "Argument 7", Relevance: 0.2398, Impact: 0.120}
-	a8 := gruff.Argument{ArgumentID: &d3IDNull, DebateID: d8.ID, Type: gruff.ARGUMENT_TYPE_PRO_RELEVANCE, Title: "Argument 8", Relevance: 0.9, Impact: 0.9823}
-	a9 := gruff.Argument{ArgumentID: &d3IDNull, DebateID: d9.ID, Type: gruff.ARGUMENT_TYPE_CON_RELEVANCE, Title: "Argument 9", Relevance: 0.2398, Impact: 0.83}
-	a10 := gruff.Argument{ParentID: &d4IDNull, DebateID: d3.ID, Type: gruff.ARGUMENT_TYPE_CON_IMPACT, Title: "Argument 10", Relevance: 0.2398, Impact: 0.83}
+	a3 := gruff.Argument{TargetDebateID: &d1IDNull, DebateID: d3.ID, Type: gruff.ARGUMENT_TYPE_PRO_TRUTH, Title: "Argument 3", Relevance: 0.2309, Impact: 0.0293}
+	a4 := gruff.Argument{TargetDebateID: &d1IDNull, DebateID: d4.ID, Type: gruff.ARGUMENT_TYPE_CON_TRUTH, Title: "Argument 4", Relevance: 0.29, Impact: 0.9823}
+	a5 := gruff.Argument{TargetDebateID: &d1IDNull, DebateID: d5.ID, Type: gruff.ARGUMENT_TYPE_PRO_TRUTH, Title: "Argument 5", Relevance: 0.4893, Impact: 0.100}
+	a6 := gruff.Argument{TargetDebateID: &d2IDNull, DebateID: d6.ID, Type: gruff.ARGUMENT_TYPE_PRO_TRUTH, Title: "Argument 6", Relevance: 0.438, Impact: 0.2398}
+	a7 := gruff.Argument{TargetDebateID: &d2IDNull, DebateID: d7.ID, Type: gruff.ARGUMENT_TYPE_CON_TRUTH, Title: "Argument 7", Relevance: 0.2398, Impact: 0.120}
+	a8 := gruff.Argument{TargetArgumentID: &d3IDNull, DebateID: d8.ID, Type: gruff.ARGUMENT_TYPE_PRO_RELEVANCE, Title: "Argument 8", Relevance: 0.9, Impact: 0.9823}
+	a9 := gruff.Argument{TargetArgumentID: &d3IDNull, DebateID: d9.ID, Type: gruff.ARGUMENT_TYPE_CON_RELEVANCE, Title: "Argument 9", Relevance: 0.2398, Impact: 0.83}
+	a10 := gruff.Argument{TargetDebateID: &d4IDNull, DebateID: d3.ID, Type: gruff.ARGUMENT_TYPE_CON_IMPACT, Title: "Argument 10", Relevance: 0.2398, Impact: 0.83}
 	TESTDB.Create(&a3)
 	TESTDB.Create(&a4)
 	TESTDB.Create(&a5)
@@ -194,6 +182,13 @@ func TestGetDebate(t *testing.T) {
 	a8.Debate = &d8
 	a9.Debate = &d9
 	a10.Debate = &d3
+
+	db := TESTDB
+	db = db.Preload("Links")
+	db = db.Preload("Contexts")
+	db = db.Preload("Values")
+	db = db.Preload("Tags")
+	db.Where("id = ?", d1.ID).First(&d1)
 
 	d1.ProTruth = []gruff.Argument{a3, a5}
 	d1.ConTruth = []gruff.Argument{a4}

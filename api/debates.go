@@ -35,7 +35,7 @@ func (ctx *Context) GetDebate(c echo.Context) error {
 	db = ctx.Database
 	db = db.Preload("Debate")
 	db = db.Where("type = ?", gruff.ARGUMENT_TYPE_PRO_TRUTH)
-	err = db.Where("parent_id = ?", id).Find(&proArgs).Error
+	err = db.Where("target_debate_id = ?", id).Find(&proArgs).Error
 	if err != nil {
 		c.String(http.StatusInternalServerError, "ServerError")
 		return err
@@ -46,7 +46,7 @@ func (ctx *Context) GetDebate(c echo.Context) error {
 	db = ctx.Database
 	db = db.Preload("Debate")
 	db = db.Where("type = ?", gruff.ARGUMENT_TYPE_CON_TRUTH)
-	err = db.Where("parent_id = ?", id).Find(&conArgs).Error
+	err = db.Where("target_debate_id = ?", id).Find(&conArgs).Error
 	if err != nil {
 		c.String(http.StatusInternalServerError, "ServerError")
 		return err

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"github.com/bigokro/gruff-server/gruff"
 	"github.com/google/uuid"
 	"github.com/labstack/echo"
@@ -27,13 +28,13 @@ func (ctx *Context) GetArgument(c echo.Context) error {
 	db = db.Preload("Debate.Contexts")
 	db = db.Preload("Debate.Values")
 	db = db.Preload("Debate.Tags")
-	db = db.Preload("Parent")
-	db = db.Preload("Parent.Links")
-	db = db.Preload("Parent.Contexts")
-	db = db.Preload("Parent.Values")
-	db = db.Preload("Parent.Tags")
-	db = db.Preload("Argument")
-	db = db.Preload("Argument.Debate")
+	db = db.Preload("TargetDebate")
+	db = db.Preload("TargetDebate.Links")
+	db = db.Preload("TargetDebate.Contexts")
+	db = db.Preload("TargetDebate.Values")
+	db = db.Preload("TargetDebate.Tags")
+	db = db.Preload("TargetArgument")
+	db = db.Preload("TargetArgument.Debate")
 	err = db.Where("id = ?", id).First(&argument).Error
 	if err != nil {
 		c.String(http.StatusNotFound, "NotFound")
@@ -42,28 +43,35 @@ func (ctx *Context) GetArgument(c echo.Context) error {
 
 	proRel := []gruff.Argument{}
 	db = ctx.Database
+	db = db.Preload("Debate")
 	db = db.Where("type = ?", gruff.ARGUMENT_TYPE_PRO_RELEVANCE)
-	err = db.Where("argument_id = ?", id).Find(&proRel).Error
+	err = db.Where("target_argument_id = ?", id).Find(&proRel).Error
 	if err != nil {
 		c.String(http.StatusInternalServerError, "ServerError")
 		return err
 	}
 	argument.ProRelevance = proRel
 
+	fmt.Println("Pro Relevance:", proRel)
+
 	conRel := []gruff.Argument{}
 	db = ctx.Database
+	db = db.Preload("Debate")
 	db = db.Where("type = ?", gruff.ARGUMENT_TYPE_CON_RELEVANCE)
-	err = db.Where("argument_id = ?", id).Find(&conRel).Error
+	err = db.Where("target_argument_id = ?", id).Find(&conRel).Error
 	if err != nil {
 		c.String(http.StatusInternalServerError, "ServerError")
 		return err
 	}
 	argument.ConRelevance = conRel
 
+	fmt.Println("Con Relevance:", conRel)
+
 	proImpact := []gruff.Argument{}
 	db = ctx.Database
+	db = db.Preload("Debate")
 	db = db.Where("type = ?", gruff.ARGUMENT_TYPE_PRO_IMPACT)
-	err = db.Where("argument_id = ?", id).Find(&proImpact).Error
+	err = db.Where("target_argument_id = ?", id).Find(&proImpact).Error
 	if err != nil {
 		c.String(http.StatusInternalServerError, "ServerError")
 		return err
@@ -72,8 +80,9 @@ func (ctx *Context) GetArgument(c echo.Context) error {
 
 	conImpact := []gruff.Argument{}
 	db = ctx.Database
+	db = db.Preload("Debate")
 	db = db.Where("type = ?", gruff.ARGUMENT_TYPE_CON_IMPACT)
-	err = db.Where("argument_id = ?", id).Find(&conImpact).Error
+	err = db.Where("target_argument_id = ?", id).Find(&conImpact).Error
 	if err != nil {
 		c.String(http.StatusInternalServerError, "ServerError")
 		return err
@@ -121,9 +130,9 @@ func (ctx *Context) MoveArgument(c echo.Context) error {
 		}
 
 		newIdN := gruff.NullableUUID{newId}
-		arg.ParentID = &newIdN
-		arg.Parent = &newDebate
-		arg.ArgumentID = nil
+		arg.TargetDebateID = &newIdN
+		arg.TargetDebate = &newDebate
+		arg.TargetArgumentID = nil
 
 	case gruff.ARGUMENT_TYPE_PRO_RELEVANCE, gruff.ARGUMENT_TYPE_CON_RELEVANCE, gruff.ARGUMENT_TYPE_PRO_IMPACT, gruff.ARGUMENT_TYPE_CON_IMPACT:
 		newArg := gruff.Argument{}
@@ -134,9 +143,9 @@ func (ctx *Context) MoveArgument(c echo.Context) error {
 		}
 
 		newIdN := gruff.NullableUUID{newId}
-		arg.ArgumentID = &newIdN
-		arg.Argument = &newArg
-		arg.ParentID = nil
+		arg.TargetArgumentID = &newIdN
+		arg.TargetArgument = &newArg
+		arg.TargetDebateID = nil
 
 	default:
 		c.String(http.StatusNotFound, "NotFound")

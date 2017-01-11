@@ -33,24 +33,24 @@ const ARGUMENT_TYPE_CON_IMPACT int = 6
 
   A quick explanation of the fields:
     Debate: The Debate (or claim) that is being used as an argument
-    Parent: The "parent" Debate against which a pro/con truth argument is being made
-    Argument: In the case of a relevance or impact argument, the argument to which it refers
+    Target Debate: The "parent" Debate against which a pro/con truth argument is being made
+    Target Argument: In the case of a relevance or impact argument, the argument to which it refers
 */
 type Argument struct {
 	Identifier
-	ParentID     *NullableUUID `json:"parentId,omitempty" sql:"type:uuid"`
-	Parent       *Debate       `json:"parent,omitempty"`
-	ArgumentID   *NullableUUID `json:"argumentId,omitempty" sql:"type:uuid"`
-	Argument     *Argument     `json:"argument,omitempty"`
-	DebateID     uuid.UUID     `json:"debateId" sql:"type:uuid;not null"`
-	Debate       *Debate       `json:"debate,omitempty"`
-	Title        string        `json:"title" sql:"not null" valid:"length(3|1000)"`
-	Description  string        `json:"desc" valid:"length(3|4000)"`
-	Type         int           `json:"type" sql:"not null"`
-	Relevance    float64       `json:"relevance"`
-	Impact       float64       `json:"impact"`
-	ProRelevance []Argument    `json:"prorelev,omitempty"`
-	ConRelevance []Argument    `json:"conrelev,omitempty"`
-	ProImpact    []Argument    `json:"proimpact,omitempty"`
-	ConImpact    []Argument    `json:"conimpact,omitempty"`
+	TargetDebateID   *NullableUUID `json:"targetDebateId,omitempty" sql:"type:uuid"`
+	TargetDebate     *Debate       `json:"targetDebate,omitempty"`
+	TargetArgumentID *NullableUUID `json:"targetArgId,omitempty" sql:"type:uuid"`
+	TargetArgument   *Argument     `json:"targetArg,omitempty"`
+	DebateID         uuid.UUID     `json:"debateId" sql:"type:uuid;not null"`
+	Debate           *Debate       `json:"debate,omitempty"`
+	Title            string        `json:"title" sql:"not null" valid:"length(3|1000)"`
+	Description      string        `json:"desc" valid:"length(3|4000)"`
+	Type             int           `json:"type" sql:"not null"`
+	Relevance        float64       `json:"relevance"`
+	Impact           float64       `json:"impact"`
+	ProRelevance     []Argument    `json:"prorelev,omitempty"`
+	ConRelevance     []Argument    `json:"conrelev,omitempty"`
+	ProImpact        []Argument    `json:"proimpact,omitempty"`
+	ConImpact        []Argument    `json:"conimpact,omitempty"`
 }

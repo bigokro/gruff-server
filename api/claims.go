@@ -7,25 +7,25 @@ import (
 	"net/http"
 )
 
-func Debates(c echo.Context) error {
-	return c.String(http.StatusOK, "Debates")
+func Claims(c echo.Context) error {
+	return c.String(http.StatusOK, "Claims")
 }
 
-func (ctx *Context) GetDebate(c echo.Context) error {
+func (ctx *Context) GetClaim(c echo.Context) error {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.String(http.StatusNotFound, "NotFound")
 		return err
 	}
 
-	debate := gruff.Debate{}
+	claim := gruff.Claim{}
 
 	db := ctx.Database
 	db = db.Preload("Links")
 	db = db.Preload("Contexts")
 	db = db.Preload("Values")
 	db = db.Preload("Tags")
-	err = db.Where("id = ?", id).First(&debate).Error
+	err = db.Where("id = ?", id).First(&claim).Error
 	if err != nil {
 		c.String(http.StatusNotFound, "NotFound")
 		return err
@@ -33,25 +33,25 @@ func (ctx *Context) GetDebate(c echo.Context) error {
 
 	proArgs := []gruff.Argument{}
 	db = ctx.Database
-	db = db.Preload("Debate")
+	db = db.Preload("Claim")
 	db = db.Where("type = ?", gruff.ARGUMENT_TYPE_PRO_TRUTH)
-	err = db.Where("target_debate_id = ?", id).Find(&proArgs).Error
+	err = db.Where("target_claim_id = ?", id).Find(&proArgs).Error
 	if err != nil {
 		c.String(http.StatusInternalServerError, "ServerError")
 		return err
 	}
-	debate.ProTruth = proArgs
+	claim.ProTruth = proArgs
 
 	conArgs := []gruff.Argument{}
 	db = ctx.Database
-	db = db.Preload("Debate")
+	db = db.Preload("Claim")
 	db = db.Where("type = ?", gruff.ARGUMENT_TYPE_CON_TRUTH)
-	err = db.Where("target_debate_id = ?", id).Find(&conArgs).Error
+	err = db.Where("target_claim_id = ?", id).Find(&conArgs).Error
 	if err != nil {
 		c.String(http.StatusInternalServerError, "ServerError")
 		return err
 	}
-	debate.ConTruth = conArgs
+	claim.ConTruth = conArgs
 
-	return c.JSON(http.StatusOK, debate)
+	return c.JSON(http.StatusOK, claim)
 }

@@ -42,8 +42,8 @@ func runMigration(db *gorm.DB) {
 
 	values := []interface{}{
 		&User{},
-		&Debate{},
-		&DebateOpinion{},
+		&Claim{},
+		&ClaimOpinion{},
 		&Argument{},
 		&ArgumentOpinion{},
 		&Link{},
@@ -61,12 +61,12 @@ func runMigration(db *gorm.DB) {
 	}
 
 	// Association tables
-	db.Exec("DROP TABLE IF EXISTS debate_contexts;")
-	db.Exec("DROP TABLE IF EXISTS debate_values;")
-	db.Exec("DROP TABLE IF EXISTS debate_tags;")
+	db.Exec("DROP TABLE IF EXISTS claim_contexts;")
+	db.Exec("DROP TABLE IF EXISTS claim_values;")
+	db.Exec("DROP TABLE IF EXISTS claim_tags;")
 
-	db.Exec("CREATE TABLE debate_contexts (context_id integer NOT NULL, debate_id uuid NOT NULL);")
-	db.Exec("CREATE TABLE debate_values (value_id integer NOT NULL, debate_id uuid NOT NULL);")
-	db.Exec("CREATE TABLE debate_tags (tag_id integer NOT NULL, debate_id uuid NOT NULL);")
+	db.Exec("CREATE TABLE claim_contexts (context_id integer NOT NULL, claim_id uuid NOT NULL);")
+	db.Exec("CREATE TABLE claim_values (value_id integer NOT NULL, claim_id uuid NOT NULL);")
+	db.Exec("CREATE TABLE claim_tags (tag_id integer NOT NULL, claim_id uuid NOT NULL);")
 
 }

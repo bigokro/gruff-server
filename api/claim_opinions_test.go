@@ -10,115 +10,115 @@ import (
 	"testing"
 )
 
-func TestListDebateOpinions(t *testing.T) {
+func TestListClaimOpinions(t *testing.T) {
 	setup()
 	defer teardown()
 
 	r := New(Token)
 
-	u1 := createDebateOpinion(TESTDB)
-	u2 := createDebateOpinion(TESTDB)
+	u1 := createClaimOpinion(TESTDB)
+	u2 := createClaimOpinion(TESTDB)
 	TESTDB.Create(&u1)
 	TESTDB.Create(&u2)
 
-	expectedResults, _ := json.Marshal([]gruff.DebateOpinion{u1, u2})
+	expectedResults, _ := json.Marshal([]gruff.ClaimOpinion{u1, u2})
 
-	r.GET("/api/debate_opinions")
+	r.GET("/api/claim_opinions")
 	res, _ := r.Run(Router())
 	assert.Equal(t, string(expectedResults), res.Body.String())
 	assert.Equal(t, http.StatusOK, res.Status())
 }
 
-func TestListDebateOpinionsPagination(t *testing.T) {
+func TestListClaimOpinionsPagination(t *testing.T) {
 	setup()
 	defer teardown()
 
 	r := New(Token)
 
-	u1 := createDebateOpinion(TESTDB)
-	u2 := createDebateOpinion(TESTDB)
+	u1 := createClaimOpinion(TESTDB)
+	u2 := createClaimOpinion(TESTDB)
 	TESTDB.Create(&u1)
 	TESTDB.Create(&u2)
 
-	r.GET("/api/debate_opinions?start=0&limit=25")
+	r.GET("/api/claim_opinions?start=0&limit=25")
 	res, _ := r.Run(Router())
 	assert.Equal(t, http.StatusOK, res.Status())
 }
 
-func TestGetDebateOpinions(t *testing.T) {
+func TestGetClaimOpinions(t *testing.T) {
 	setup()
 	defer teardown()
 
 	r := New(Token)
 
-	u1 := createDebateOpinion(TESTDB)
+	u1 := createClaimOpinion(TESTDB)
 	TESTDB.Create(&u1)
 
 	expectedResults, _ := json.Marshal(u1)
 
-	r.GET(fmt.Sprintf("/api/debate_opinions/%d", u1.ID))
+	r.GET(fmt.Sprintf("/api/claim_opinions/%d", u1.ID))
 	res, _ := r.Run(Router())
 	assert.Equal(t, string(expectedResults), res.Body.String())
 	assert.Equal(t, http.StatusOK, res.Status())
 }
 
-func TestCreateDebateOpinions(t *testing.T) {
+func TestCreateClaimOpinions(t *testing.T) {
 	setup()
 	defer teardown()
 
 	r := New(Token)
 
-	u1 := createDebateOpinion(TESTDB)
+	u1 := createClaimOpinion(TESTDB)
 
-	r.POST("/api/debate_opinions")
+	r.POST("/api/claim_opinions")
 	r.SetBody(u1)
 	res, _ := r.Run(Router())
 	assert.Equal(t, http.StatusCreated, res.Status())
 }
 
-func TestUpdateDebateOpinions(t *testing.T) {
+func TestUpdateClaimOpinions(t *testing.T) {
 	setup()
 	defer teardown()
 
 	r := New(Token)
 
-	u1 := createDebateOpinion(TESTDB)
+	u1 := createClaimOpinion(TESTDB)
 	TESTDB.Create(&u1)
 
-	r.PUT(fmt.Sprintf("/api/debate_opinions/%d", u1.ID))
+	r.PUT(fmt.Sprintf("/api/claim_opinions/%d", u1.ID))
 	r.SetBody(u1)
 	res, _ := r.Run(Router())
 	assert.Equal(t, http.StatusAccepted, res.Status())
 }
 
-func TestDeleteDebateOpinions(t *testing.T) {
+func TestDeleteClaimOpinions(t *testing.T) {
 	setup()
 	defer teardown()
 	r := New(Token)
 
-	u1 := createDebateOpinion(TESTDB)
+	u1 := createClaimOpinion(TESTDB)
 	TESTDB.Create(&u1)
 
-	r.DELETE(fmt.Sprintf("/api/debate_opinions/%d", u1.ID))
+	r.DELETE(fmt.Sprintf("/api/claim_opinions/%d", u1.ID))
 	res, _ := r.Run(Router())
 	assert.Equal(t, http.StatusOK, res.Status())
 }
 
-func createDebateOpinion(db *gorm.DB) gruff.DebateOpinion {
+func createClaimOpinion(db *gorm.DB) gruff.ClaimOpinion {
 
 	u := createUserAO(db)
 
-	d := gruff.Debate{
-		Title:       "Debate",
-		Description: "Debate",
+	d := gruff.Claim{
+		Title:       "Claim",
+		Description: "Claim",
 	}
 
 	db.Create(&d)
 
-	do := gruff.DebateOpinion{
-		UserID:   uint64(u.ID),
-		DebateID: d.ID,
-		Truth:    10,
+	do := gruff.ClaimOpinion{
+		UserID:  uint64(u.ID),
+		ClaimID: d.ID,
+		Truth:   10,
 	}
 
 	return do

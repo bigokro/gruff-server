@@ -23,18 +23,18 @@ func (ctx *Context) GetArgument(c echo.Context) error {
 	argument := gruff.Argument{}
 
 	db := ctx.Database
-	db = db.Preload("Debate")
-	db = db.Preload("Debate.Links")
-	db = db.Preload("Debate.Contexts")
-	db = db.Preload("Debate.Values")
-	db = db.Preload("Debate.Tags")
-	db = db.Preload("TargetDebate")
-	db = db.Preload("TargetDebate.Links")
-	db = db.Preload("TargetDebate.Contexts")
-	db = db.Preload("TargetDebate.Values")
-	db = db.Preload("TargetDebate.Tags")
+	db = db.Preload("Claim")
+	db = db.Preload("Claim.Links")
+	db = db.Preload("Claim.Contexts")
+	db = db.Preload("Claim.Values")
+	db = db.Preload("Claim.Tags")
+	db = db.Preload("TargetClaim")
+	db = db.Preload("TargetClaim.Links")
+	db = db.Preload("TargetClaim.Contexts")
+	db = db.Preload("TargetClaim.Values")
+	db = db.Preload("TargetClaim.Tags")
 	db = db.Preload("TargetArgument")
-	db = db.Preload("TargetArgument.Debate")
+	db = db.Preload("TargetArgument.Claim")
 	err = db.Where("id = ?", id).First(&argument).Error
 	if err != nil {
 		c.String(http.StatusNotFound, "NotFound")
@@ -43,7 +43,7 @@ func (ctx *Context) GetArgument(c echo.Context) error {
 
 	proRel := []gruff.Argument{}
 	db = ctx.Database
-	db = db.Preload("Debate")
+	db = db.Preload("Claim")
 	db = db.Where("type = ?", gruff.ARGUMENT_TYPE_PRO_RELEVANCE)
 	err = db.Where("target_argument_id = ?", id).Find(&proRel).Error
 	if err != nil {
@@ -56,7 +56,7 @@ func (ctx *Context) GetArgument(c echo.Context) error {
 
 	conRel := []gruff.Argument{}
 	db = ctx.Database
-	db = db.Preload("Debate")
+	db = db.Preload("Claim")
 	db = db.Where("type = ?", gruff.ARGUMENT_TYPE_CON_RELEVANCE)
 	err = db.Where("target_argument_id = ?", id).Find(&conRel).Error
 	if err != nil {
@@ -69,7 +69,7 @@ func (ctx *Context) GetArgument(c echo.Context) error {
 
 	proImpact := []gruff.Argument{}
 	db = ctx.Database
-	db = db.Preload("Debate")
+	db = db.Preload("Claim")
 	db = db.Where("type = ?", gruff.ARGUMENT_TYPE_PRO_IMPACT)
 	err = db.Where("target_argument_id = ?", id).Find(&proImpact).Error
 	if err != nil {
@@ -80,7 +80,7 @@ func (ctx *Context) GetArgument(c echo.Context) error {
 
 	conImpact := []gruff.Argument{}
 	db = ctx.Database
-	db = db.Preload("Debate")
+	db = db.Preload("Claim")
 	db = db.Where("type = ?", gruff.ARGUMENT_TYPE_CON_IMPACT)
 	err = db.Where("target_argument_id = ?", id).Find(&conImpact).Error
 	if err != nil {
@@ -122,16 +122,16 @@ func (ctx *Context) MoveArgument(c echo.Context) error {
 
 	switch t {
 	case gruff.ARGUMENT_TYPE_PRO_TRUTH, gruff.ARGUMENT_TYPE_CON_TRUTH:
-		newDebate := gruff.Debate{}
-		err := db.Where("id = ?", newId).First(&newDebate).Error
+		newClaim := gruff.Claim{}
+		err := db.Where("id = ?", newId).First(&newClaim).Error
 		if err != nil {
 			c.String(http.StatusNotFound, "NotFound")
 			return err
 		}
 
 		newIdN := gruff.NullableUUID{newId}
-		arg.TargetDebateID = &newIdN
-		arg.TargetDebate = &newDebate
+		arg.TargetClaimID = &newIdN
+		arg.TargetClaim = &newClaim
 		arg.TargetArgumentID = nil
 
 	case gruff.ARGUMENT_TYPE_PRO_RELEVANCE, gruff.ARGUMENT_TYPE_CON_RELEVANCE, gruff.ARGUMENT_TYPE_PRO_IMPACT, gruff.ARGUMENT_TYPE_CON_IMPACT:
@@ -145,7 +145,7 @@ func (ctx *Context) MoveArgument(c echo.Context) error {
 		newIdN := gruff.NullableUUID{newId}
 		arg.TargetArgumentID = &newIdN
 		arg.TargetArgument = &newArg
-		arg.TargetDebateID = nil
+		arg.TargetClaimID = nil
 
 	default:
 		c.String(http.StatusNotFound, "NotFound")

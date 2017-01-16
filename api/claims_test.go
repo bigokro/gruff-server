@@ -9,42 +9,42 @@ import (
 	"testing"
 )
 
-func TestListArguments(t *testing.T) {
+func TestListClaims(t *testing.T) {
 	setup()
 	defer teardown()
 
 	r := New(Token)
 
-	u1 := createArgument()
-	u2 := createArgument()
+	u1 := createClaim()
+	u2 := createClaim()
 	TESTDB.Create(&u1)
 	TESTDB.Create(&u2)
 
-	expectedResults, _ := json.Marshal([]gruff.Argument{u1, u2})
+	expectedResults, _ := json.Marshal([]gruff.Claim{u1, u2})
 
-	r.GET("/api/arguments")
+	r.GET("/api/claims")
 	res, _ := r.Run(Router())
 	assert.Equal(t, string(expectedResults), res.Body.String())
 	assert.Equal(t, http.StatusOK, res.Status())
 }
 
-func TestListArgumentsPagination(t *testing.T) {
+func TestListClaimsPagination(t *testing.T) {
 	setup()
 	defer teardown()
 
 	r := New(Token)
 
-	u1 := createArgument()
-	u2 := createArgument()
+	u1 := createClaim()
+	u2 := createClaim()
 	TESTDB.Create(&u1)
 	TESTDB.Create(&u2)
 
-	r.GET("/api/arguments?start=0&limit=25")
+	r.GET("/api/claims?start=0&limit=25")
 	res, _ := r.Run(Router())
 	assert.Equal(t, http.StatusOK, res.Status())
 }
 
-func TestGetArgumentProTruth(t *testing.T) {
+func TestGetClaim(t *testing.T) {
 	setup()
 	defer teardown()
 
@@ -115,8 +115,6 @@ func TestGetArgumentProTruth(t *testing.T) {
 	TESTDB.Exec("INSERT INTO claim_contexts (context_id, claim_id) VALUES (?, ?)", c3.ID, d8.ID)
 	TESTDB.Exec("INSERT INTO claim_contexts (context_id, claim_id) VALUES (?, ?)", c3.ID, d9.ID)
 
-	d3.Contexts = []gruff.Context{c3}
-
 	v1 := gruff.Value{Title: "Test", Description: "Testing is good"}
 	v2 := gruff.Value{Title: "Correctness", Description: "We want correct code and tests"}
 	v3 := gruff.Value{Title: "Completeness", Description: "The test suite should be complete enough to protect against all likely bugs"}
@@ -135,8 +133,6 @@ func TestGetArgumentProTruth(t *testing.T) {
 	TESTDB.Exec("INSERT INTO claim_values (value_id, claim_id) VALUES (?, ?)", v3.ID, d7.ID)
 	TESTDB.Exec("INSERT INTO claim_values (value_id, claim_id) VALUES (?, ?)", v3.ID, d8.ID)
 	TESTDB.Exec("INSERT INTO claim_values (value_id, claim_id) VALUES (?, ?)", v3.ID, d9.ID)
-
-	d3.Values = []gruff.Value{v3}
 
 	t1 := gruff.Tag{Title: "Test"}
 	t2 := gruff.Tag{Title: "Valid"}
@@ -157,26 +153,23 @@ func TestGetArgumentProTruth(t *testing.T) {
 	TESTDB.Exec("INSERT INTO claim_tags (tag_id, claim_id) VALUES (?, ?)", t3.ID, d8.ID)
 	TESTDB.Exec("INSERT INTO claim_tags (tag_id, claim_id) VALUES (?, ?)", t3.ID, d9.ID)
 
-	d3.Tags = []gruff.Tag{t3}
-
 	d1IDNull := gruff.NullableUUID{d1.ID}
 	d2IDNull := gruff.NullableUUID{d2.ID}
+	d3IDNull := gruff.NullableUUID{d3.ID}
+	d4IDNull := gruff.NullableUUID{d4.ID}
 	a3 := gruff.Argument{TargetClaimID: &d1IDNull, ClaimID: d3.ID, Type: gruff.ARGUMENT_TYPE_PRO_TRUTH, Title: "Argument 3", Relevance: 0.2309, Impact: 0.0293}
 	a4 := gruff.Argument{TargetClaimID: &d1IDNull, ClaimID: d4.ID, Type: gruff.ARGUMENT_TYPE_CON_TRUTH, Title: "Argument 4", Relevance: 0.29, Impact: 0.9823}
 	a5 := gruff.Argument{TargetClaimID: &d1IDNull, ClaimID: d5.ID, Type: gruff.ARGUMENT_TYPE_PRO_TRUTH, Title: "Argument 5", Relevance: 0.4893, Impact: 0.100}
 	a6 := gruff.Argument{TargetClaimID: &d2IDNull, ClaimID: d6.ID, Type: gruff.ARGUMENT_TYPE_PRO_TRUTH, Title: "Argument 6", Relevance: 0.438, Impact: 0.2398}
 	a7 := gruff.Argument{TargetClaimID: &d2IDNull, ClaimID: d7.ID, Type: gruff.ARGUMENT_TYPE_CON_TRUTH, Title: "Argument 7", Relevance: 0.2398, Impact: 0.120}
+	a8 := gruff.Argument{TargetArgumentID: &d3IDNull, ClaimID: d8.ID, Type: gruff.ARGUMENT_TYPE_PRO_RELEVANCE, Title: "Argument 8", Relevance: 0.9, Impact: 0.9823}
+	a9 := gruff.Argument{TargetArgumentID: &d3IDNull, ClaimID: d9.ID, Type: gruff.ARGUMENT_TYPE_CON_RELEVANCE, Title: "Argument 9", Relevance: 0.2398, Impact: 0.83}
+	a10 := gruff.Argument{TargetClaimID: &d4IDNull, ClaimID: d3.ID, Type: gruff.ARGUMENT_TYPE_CON_IMPACT, Title: "Argument 10", Relevance: 0.2398, Impact: 0.83}
 	TESTDB.Create(&a3)
 	TESTDB.Create(&a4)
 	TESTDB.Create(&a5)
 	TESTDB.Create(&a6)
 	TESTDB.Create(&a7)
-
-	a3IDNull := gruff.NullableUUID{a3.ID}
-	a4IDNull := gruff.NullableUUID{a4.ID}
-	a8 := gruff.Argument{TargetArgumentID: &a3IDNull, ClaimID: d8.ID, Type: gruff.ARGUMENT_TYPE_PRO_RELEVANCE, Title: "Argument 8", Relevance: 0.9, Impact: 0.9823}
-	a9 := gruff.Argument{TargetArgumentID: &a3IDNull, ClaimID: d9.ID, Type: gruff.ARGUMENT_TYPE_CON_RELEVANCE, Title: "Argument 9", Relevance: 0.2398, Impact: 0.83}
-	a10 := gruff.Argument{TargetClaimID: &a4IDNull, ClaimID: d3.ID, Type: gruff.ARGUMENT_TYPE_CON_IMPACT, Title: "Argument 10", Relevance: 0.2398, Impact: 0.83}
 	TESTDB.Create(&a8)
 	TESTDB.Create(&a9)
 	TESTDB.Create(&a10)
@@ -197,66 +190,64 @@ func TestGetArgumentProTruth(t *testing.T) {
 	db = db.Preload("Tags")
 	db.Where("id = ?", d1.ID).First(&d1)
 
-	a3.TargetClaim = &d1
-	a3.ProRelevance = []gruff.Argument{a8}
-	a3.ConRelevance = []gruff.Argument{a9}
+	d1.ProTruth = []gruff.Argument{a3, a5}
+	d1.ConTruth = []gruff.Argument{a4}
 
-	expectedResults, _ := json.Marshal(a3)
+	expectedResults, _ := json.Marshal(d1)
 
-	r.GET(fmt.Sprintf("/api/arguments/%s", a3.ID.String()))
+	r.GET(fmt.Sprintf("/api/claims/%s", d1.ID.String()))
 	res, _ := r.Run(Router())
 	assert.Equal(t, string(expectedResults), res.Body.String())
 	assert.Equal(t, http.StatusOK, res.Status())
 }
 
-func TestCreateArguments(t *testing.T) {
+func TestCreateClaim(t *testing.T) {
 	setup()
 	defer teardown()
 
 	r := New(Token)
 
-	u1 := createArgument()
+	u1 := createClaim()
 
-	r.POST("/api/arguments")
+	r.POST("/api/claims")
 	r.SetBody(u1)
 	res, _ := r.Run(Router())
 	assert.Equal(t, http.StatusCreated, res.Status())
 }
 
-func TestUpdateArgument(t *testing.T) {
+func TestUpdateClaim(t *testing.T) {
 	setup()
 	defer teardown()
 
 	r := New(Token)
 
-	u1 := createArgument()
+	u1 := createClaim()
 	TESTDB.Create(&u1)
 
-	r.PUT(fmt.Sprintf("/api/arguments/%s", u1.ID))
+	r.PUT(fmt.Sprintf("/api/claims/%s", u1.ID))
 	r.SetBody(u1)
 	res, _ := r.Run(Router())
 	assert.Equal(t, http.StatusAccepted, res.Status())
 }
 
-func TestDeleteArgument(t *testing.T) {
+func TestDeleteClaim(t *testing.T) {
 	setup()
 	defer teardown()
 	r := New(Token)
 
-	u1 := createArgument()
+	u1 := createClaim()
 	TESTDB.Create(&u1)
 
-	r.DELETE(fmt.Sprintf("/api/arguments/%s", u1.ID))
+	r.DELETE(fmt.Sprintf("/api/claims/%s", u1.ID))
 	res, _ := r.Run(Router())
 	assert.Equal(t, http.StatusOK, res.Status())
 }
 
-func createArgument() gruff.Argument {
-	a := gruff.Argument{
-		Title:       "arguments",
-		Description: "arguments",
-		Type:        gruff.ARGUMENT_TYPE_PRO_TRUTH,
+func createClaim() gruff.Claim {
+	c := gruff.Claim{
+		Title:       "Claim",
+		Description: "Claim",
 	}
 
-	return a
+	return c
 }

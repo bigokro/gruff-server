@@ -5,11 +5,11 @@ import (
 	"testing"
 )
 
-func TestCreateDebate(t *testing.T) {
+func TestCreateClaim(t *testing.T) {
 	setupDB()
 	defer teardownDB()
 
-	d := Debate{
+	d := Claim{
 		Title:       "The first debate!",
 		Description: "A description",
 		Truth:       87.55,

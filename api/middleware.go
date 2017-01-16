@@ -73,11 +73,11 @@ func StringToType(typeName string) (t reflect.Type) {
 	case "users":
 		var m gruff.User
 		t = reflect.TypeOf(m)
-	case "debates":
-		var m gruff.Debate
+	case "claims":
+		var m gruff.Claim
 		t = reflect.TypeOf(m)
-	case "debate_opinions":
-		var m gruff.DebateOpinion
+	case "claim_opinions":
+		var m gruff.ClaimOpinion
 		t = reflect.TypeOf(m)
 	case "arguments":
 		var m gruff.Argument

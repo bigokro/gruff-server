@@ -14,15 +14,15 @@ func TestIsIdentifier(t *testing.T) {
 	assert.False(t, IsIdentifier(reflect.TypeOf(Value{})))
 	assert.False(t, IsIdentifier(reflect.TypeOf(User{})))
 	assert.False(t, IsIdentifier(reflect.TypeOf(Context{})))
-	assert.False(t, IsIdentifier(reflect.TypeOf(DebateOpinion{})))
+	assert.False(t, IsIdentifier(reflect.TypeOf(ClaimOpinion{})))
 	assert.False(t, IsIdentifier(reflect.TypeOf(ArgumentOpinion{})))
-	assert.True(t, IsIdentifier(reflect.TypeOf(Debate{})))
+	assert.True(t, IsIdentifier(reflect.TypeOf(Claim{})))
 	assert.True(t, IsIdentifier(reflect.TypeOf(Argument{})))
 	assert.True(t, IsIdentifier(reflect.TypeOf(Link{})))
 }
 
 func TestIdentifierGenerateUUID(t *testing.T) {
-	d := Debate{}
+	d := Claim{}
 
 	assert.Equal(t, ZERO_UUID, d.ID)
 
@@ -31,7 +31,7 @@ func TestIdentifierGenerateUUID(t *testing.T) {
 }
 
 func TestSetCreatedBy(t *testing.T) {
-	d := Debate{}
+	d := Claim{}
 	SetCreatedByID(&d, 44)
 
 	assert.Equal(t, uint64(44), d.CreatedByID)

@@ -104,6 +104,9 @@ func (ctx *Context) CreateArgument(c echo.Context) error {
 		claim := gruff.Claim{Title: arg.Title, Description: arg.Description}
 		if arg.Claim.Title != "" {
 			claim.Title = arg.Claim.Title
+			if arg.Title == "" {
+				arg.Title = arg.Claim.Title
+			}
 		}
 		if arg.Claim.Description != "" {
 			claim.Description = arg.Claim.Description

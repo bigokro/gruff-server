@@ -298,7 +298,7 @@ func itemsOrEmptySlice(t reflect.Type, items interface{}) interface{} {
 }
 
 func BasicValidationForCreate(ctx *Context, c echo.Context, item interface{}) gruff.GruffError {
-	if gruff.IsValidator(ctx.Type) {
+	if gruff.IsValidator(reflect.TypeOf(item)) {
 		validator := item.(gruff.Validator)
 		return validator.ValidateForCreate()
 	} else {

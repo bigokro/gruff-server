@@ -40,7 +40,7 @@ func SetUpRouter(test bool, db *gorm.DB) *echo.Echo {
 
 	public.GET("/arguments", ctx.List)
 	public.GET("/arguments/:id", ctx.GetArgument)
-	private.POST("/arguments", ctx.Create)
+	private.POST("/arguments", ctx.CreateArgument)
 	private.PUT("/arguments/:id", ctx.Update)
 	private.DELETE("/arguments/:id", ctx.Delete)
 	private.PUT("/arguments/:id/move/:newId/type/:type", ctx.MoveArgument)

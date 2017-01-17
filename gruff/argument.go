@@ -44,7 +44,7 @@ type Argument struct {
 	TargetArgument   *Argument     `json:"targetArg,omitempty"`
 	ClaimID          uuid.UUID     `json:"claimId" sql:"type:uuid;not null"`
 	Claim            *Claim        `json:"claim,omitempty"`
-	Title            string        `json:"title" sql:"not null" valid:"length(3|1000)"`
+	Title            string        `json:"title" sql:"not null" valid:"length(3|1000),required"`
 	Description      string        `json:"desc" valid:"length(3|4000)"`
 	Type             int           `json:"type" sql:"not null"`
 	Relevance        float64       `json:"relevance"`
@@ -53,4 +53,71 @@ type Argument struct {
 	ConRelevance     []Argument    `json:"conrelev,omitempty"`
 	ProImpact        []Argument    `json:"proimpact,omitempty"`
 	ConImpact        []Argument    `json:"conimpact,omitempty"`
+}
+
+func (a Argument) ValidateForCreate() GruffError {
+	err := a.ValidateField("Title")
+	if err != nil {
+		return err
+	}
+	err = a.ValidateField("Description")
+	if err != nil {
+		return err
+	}
+	err = a.ValidateField("Type")
+	if err != nil {
+		return err
+	}
+	err = a.ValidateIDs()
+	if err != nil {
+		return err
+	}
+	err = a.ValidateType()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (a Argument) ValidateForUpdate() GruffError {
+	return a.ValidateForCreate()
+}
+
+func (a Argument) ValidateField(f string) GruffError {
+	err := ValidateStructField(a, f)
+	return err
+}
+
+func (a Argument) ValidateIDs() GruffError {
+	if a.ClaimID == uuid.Nil {
+		return NewBusinessError("ClaimID: non zero value required;")
+	}
+	if (a.TargetClaimID == nil || a.TargetClaimID.UUID == uuid.Nil) &&
+		(a.TargetArgumentID == nil || a.TargetArgumentID.UUID == uuid.Nil) {
+		return NewBusinessError("An Argument must have a target Claim or target Argument ID")
+	}
+	if a.TargetClaimID != nil && a.TargetArgumentID != nil {
+		return NewBusinessError("An Argument can have only one target Claim or target Argument ID")
+
+	}
+	return nil
+}
+
+func (a Argument) ValidateType() GruffError {
+	switch a.Type {
+	case ARGUMENT_TYPE_PRO_TRUTH, ARGUMENT_TYPE_CON_TRUTH:
+		if a.TargetClaimID == nil || a.TargetClaimID.UUID == uuid.Nil {
+			return NewBusinessError("A pro or con truth argument must refer to a target claim")
+		}
+	case ARGUMENT_TYPE_PRO_RELEVANCE,
+		ARGUMENT_TYPE_CON_RELEVANCE,
+		ARGUMENT_TYPE_PRO_IMPACT,
+		ARGUMENT_TYPE_CON_IMPACT:
+		if a.TargetArgumentID == nil || a.TargetArgumentID.UUID == uuid.Nil {
+			return NewBusinessError("An impact or relevance argument must refer to a target argument")
+		}
+	default:
+		return NewBusinessError("Type: invalid;")
+	}
+	return nil
 }

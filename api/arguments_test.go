@@ -209,7 +209,48 @@ func TestGetArgumentProTruth(t *testing.T) {
 	assert.Equal(t, http.StatusOK, res.Status())
 }
 
-func TestCreateArguments(t *testing.T) {
+func TestCreateArgumentForClaim(t *testing.T) {
+	setup()
+	defer teardown()
+
+	r := New(Token)
+
+	d1 := gruff.Claim{
+		Title:       "Claim",
+		Description: "This is a test Claim",
+		Truth:       0.001,
+	}
+	d2 := gruff.Claim{
+		Title:       "Another Claim",
+		Description: "This a target claim",
+		Truth:       1.000,
+	}
+	TESTDB.Create(&d1)
+	TESTDB.Create(&d2)
+
+	u1 := gruff.Argument{
+		ClaimID:       d1.ID,
+		TargetClaimID: &gruff.NullableUUID{UUID: d2.ID},
+		Type:          gruff.ARGUMENT_TYPE_CON_TRUTH,
+		Title:         "This is an argument",
+		Description:   "This is an arguous description",
+	}
+
+	r.POST("/api/arguments")
+	r.SetBody(u1)
+	res, _ := r.Run(Router())
+	assert.Equal(t, http.StatusCreated, res.Status())
+
+	TESTDB.Where("title = ?", u1.Title).First(&u1)
+	expectedResults, _ := json.Marshal(u1)
+
+	assert.Equal(t, string(expectedResults), res.Body.String())
+	assert.Equal(t, gruff.ARGUMENT_TYPE_CON_TRUTH, u1.Type)
+	assert.Equal(t, d1.ID, u1.ClaimID)
+	assert.Equal(t, d2.ID, u1.TargetClaimID.UUID)
+}
+
+func TestCreateArgumentNoClaim(t *testing.T) {
 	setup()
 	defer teardown()
 
@@ -220,7 +261,48 @@ func TestCreateArguments(t *testing.T) {
 	r.POST("/api/arguments")
 	r.SetBody(u1)
 	res, _ := r.Run(Router())
+	assert.Equal(t, 400, res.Status())
+}
+
+func TestCreateArgumentWithNewClaim(t *testing.T) {
+	setup()
+	defer teardown()
+
+	r := New(Token)
+
+	d1 := gruff.Claim{
+		Title:       "Claim",
+		Description: "This is a test Claim",
+	}
+	d2 := gruff.Claim{
+		Title:       "Another Claim",
+		Description: "This a target claim",
+		Truth:       1.000,
+	}
+	TESTDB.Create(&d2)
+
+	a1 := gruff.Argument{
+		Claim:         &d1,
+		TargetClaimID: &gruff.NullableUUID{UUID: d2.ID},
+		Type:          gruff.ARGUMENT_TYPE_CON_TRUTH,
+		Title:         "This is an argument",
+		Description:   "This is an arguous description",
+	}
+
+	r.POST("/api/arguments")
+	r.SetBody(a1)
+	res, _ := r.Run(Router())
 	assert.Equal(t, http.StatusCreated, res.Status())
+
+	TESTDB.Preload("Claim").Where("title = ?", a1.Title).First(&a1)
+	expectedResults, _ := json.Marshal(a1)
+
+	assert.Equal(t, string(expectedResults), res.Body.String())
+	assert.Equal(t, gruff.ARGUMENT_TYPE_CON_TRUTH, a1.Type)
+	assert.Equal(t, d2.ID, a1.TargetClaimID.UUID)
+
+	assert.Equal(t, d1.Title, a1.Claim.Title)
+	assert.Equal(t, d1.Description, a1.Claim.Description)
 }
 
 func TestUpdateArgument(t *testing.T) {

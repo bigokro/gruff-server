@@ -17,13 +17,6 @@ type Identifier struct {
 	CreatedBy   *User      `json:"createdBy"`
 }
 
-/*
-func (i *Identifier) GenerateUUID() string {
-	i.UUID = uuid.NewV4().String()
-	return i.UUID
-}
-*/
-
 func SetCreatedByID(item interface{}, id uint64) error {
 	v := reflect.ValueOf(item)
 	if v.Kind() == reflect.Ptr {

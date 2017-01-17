@@ -3,7 +3,6 @@ package gruff
 import (
 	"fmt"
 	"github.com/asaskevich/govalidator"
-	"github.com/jinzhu/gorm"
 	"reflect"
 )
 
@@ -11,7 +10,6 @@ type Validator interface {
 	ValidateForCreate() GruffError
 	ValidateForUpdate() GruffError
 	ValidateField(string) GruffError
-	ValidateModel(db *gorm.DB) GruffError
 }
 
 func IsValidator(t reflect.Type) bool {

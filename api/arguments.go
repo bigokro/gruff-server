@@ -92,6 +92,50 @@ func (ctx *Context) GetArgument(c echo.Context) error {
 	return c.JSON(http.StatusOK, argument)
 }
 
+func (ctx *Context) CreateArgument(c echo.Context) error {
+	arg := gruff.Argument{Claim: &gruff.Claim{}}
+	if err := c.Bind(&arg); err != nil {
+		return err
+	}
+
+	if arg.ClaimID == uuid.Nil {
+		// First create a new Claim for this argument
+		// TODO: grab a title from a sub debate sent with the post data
+		claim := gruff.Claim{Title: arg.Title, Description: arg.Description}
+		if arg.Claim.Title != "" {
+			claim.Title = arg.Claim.Title
+		}
+		if arg.Claim.Description != "" {
+			claim.Description = arg.Claim.Description
+		}
+		valerr := BasicValidationForCreate(ctx, c, claim)
+		if valerr != nil {
+			return valerr
+		}
+		err := ctx.Database.Create(&claim).Error
+		if err != nil {
+			c.String(http.StatusInternalServerError, "ServerError")
+			return err
+		}
+		arg.ClaimID = claim.ID
+		arg.Claim = &claim
+	} else {
+		arg.Claim = nil
+	}
+
+	valerr := BasicValidationForCreate(ctx, c, arg)
+	if valerr != nil {
+		return valerr
+	}
+
+	dberr := ctx.Database.Set("gorm:save_associations", false).Create(&arg).Error
+	if dberr != nil {
+		return dberr
+	}
+
+	return c.JSON(http.StatusCreated, arg)
+}
+
 func (ctx *Context) MoveArgument(c echo.Context) error {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {

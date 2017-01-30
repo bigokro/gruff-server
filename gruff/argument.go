@@ -35,6 +35,16 @@ const ARGUMENT_TYPE_CON_IMPACT int = 6
     Claim: The Debate (or claim) that is being used as an argument
     Target Claim: The "parent" Claim against which a pro/con truth argument is being made
     Target Argument: In the case of a relevance or impact argument, the argument to which it refers
+
+  To help understand the difference between relevance and impact arguments, imagine an argument is a bullet:
+    Impact is the size of your bullet
+    Relevance is how well you hit your target
+
+  Scoring:
+    Truth: 1.0 = definitely true; 0.5 = equal chance true or false; 0.0 = definitely false. "The world is flat" should have a 0.000000000000000001 truth score.
+    Impact: 1.0 = This argument is definitely the most important argument for this side - no need to read any others; 0.5 = This is one more argument to consider; 0.01 = Probably not even worth including in the discussion
+    Relevance: 1.0 = Completely germaine and on-topic; 0.5 = Circumstantial or somewhat relevant; 0.01 = Totally off-point, should be ignored
+
 */
 type Argument struct {
 	Identifier

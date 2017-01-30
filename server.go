@@ -1,12 +1,12 @@
 package main
 
 import (
-	"./api"
 	"fmt"
-	"github.com/bigokro/gruff-server/config"
-	"github.com/labstack/echo/engine/fasthttp"
 	"os"
 	"time"
+
+	"github.com/bigokro/gruff-server/api"
+	"github.com/bigokro/gruff-server/config"
 )
 
 func main() {
@@ -20,5 +20,5 @@ func main() {
 	root := api.SetUpRouter(false, api.RW_DB_POOL)
 
 	fmt.Printf("Starting %s server on port %s at %s\n", os.Getenv("GRUFF_NAME"), os.Getenv("GRUFF_PORT"), time.Now().String())
-	root.Run(fasthttp.New(":" + os.Getenv("GRUFF_PORT")))
+	root.Logger.Fatal(root.Start(":" + os.Getenv("GRUFF_PORT")))
 }

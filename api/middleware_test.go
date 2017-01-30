@@ -3,12 +3,13 @@ package api
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/labstack/echo"
-	"github.com/labstack/echo/engine"
-	"github.com/labstack/echo/test"
 	"log"
+	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"strings"
+
+	"github.com/labstack/echo"
 )
 
 const (
@@ -21,8 +22,8 @@ const (
 
 var Token = map[string]string{"Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWV9.TJVA95OrM7E2cBab30RMHrHDcEfxjoYZgeFONFh7HgQ"}
 
-type HTTPResponse *test.ResponseRecorder
-type HTTPRequest engine.Request
+type HTTPResponse *httptest.ResponseRecorder
+type HTTPRequest *http.Request
 type H map[string]string
 type D map[string]interface{}
 
@@ -150,7 +151,7 @@ func (rc *RequestConfig) SetCookie(cookies H) *RequestConfig {
 	return rc
 }
 
-func (rc *RequestConfig) initTest() (engine.Request, *test.ResponseRecorder) {
+func (rc *RequestConfig) initTest() (*http.Request, *httptest.ResponseRecorder) {
 	qs := ""
 	if strings.Contains(rc.Path, "?") {
 		ss := strings.Split(rc.Path, "?")
@@ -159,23 +160,24 @@ func (rc *RequestConfig) initTest() (engine.Request, *test.ResponseRecorder) {
 
 	body := bytes.NewBufferString(rc.Body)
 
-	rq := test.NewRequest(rc.Method, rc.Path, body)
+	rq, _ := http.NewRequest(rc.Method, rc.Path, body)
 
 	if len(qs) > 0 {
-		rq.URL().QueryParam(qs)
+		rq.URL.RawQuery = qs
+		// rq.URL.QueryParam(qs)
 	}
 
 	if rc.Method == "POST" || rc.Method == "PUT" {
 		if strings.HasPrefix(rc.Body, "{") {
-			rq.Header().Add(ContentType, ApplicationJSON)
+			rq.Header.Add(ContentType, ApplicationJSON)
 		} else {
-			rq.Header().Add(ContentType, ApplicationForm)
+			rq.Header.Add(ContentType, ApplicationForm)
 		}
 	}
 
 	if len(rc.Headers) > 0 {
 		for k, v := range rc.Headers {
-			rq.Header().Add(k, v)
+			rq.Header.Add(k, v)
 		}
 	}
 
@@ -187,13 +189,13 @@ func (rc *RequestConfig) initTest() (engine.Request, *test.ResponseRecorder) {
 		log.Printf("Request Cookies: %s", rc.Cookies)
 	}
 
-	rec := test.NewResponseRecorder()
+	rec := httptest.NewRecorder()
 
 	return rq, rec
 }
 
-func (rc *RequestConfig) Run(e *echo.Echo) (HTTPResponse *test.ResponseRecorder, HTTPRequest engine.Request) {
+func (rc *RequestConfig) Run(e *echo.Echo) (HTTPResponse *httptest.ResponseRecorder, HTTPRequest *http.Request) {
 	rq, rec := rc.initTest()
-	e.ServeHTTP(rq, rec)
+	e.ServeHTTP(rec, rq)
 	return rec, rq
 }

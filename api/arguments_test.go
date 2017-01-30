@@ -3,10 +3,11 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/bigokro/gruff-server/gruff"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"testing"
+
+	"github.com/bigokro/gruff-server/gruff"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestListArguments(t *testing.T) {
@@ -25,7 +26,7 @@ func TestListArguments(t *testing.T) {
 	r.GET("/api/arguments")
 	res, _ := r.Run(Router())
 	assert.Equal(t, string(expectedResults), res.Body.String())
-	assert.Equal(t, http.StatusOK, res.Status())
+	assert.Equal(t, http.StatusOK, res.Code)
 }
 
 func TestListArgumentsPagination(t *testing.T) {
@@ -41,7 +42,7 @@ func TestListArgumentsPagination(t *testing.T) {
 
 	r.GET("/api/arguments?start=0&limit=25")
 	res, _ := r.Run(Router())
-	assert.Equal(t, http.StatusOK, res.Status())
+	assert.Equal(t, http.StatusOK, res.Code)
 }
 
 func TestGetArgumentProTruth(t *testing.T) {
@@ -206,7 +207,7 @@ func TestGetArgumentProTruth(t *testing.T) {
 	r.GET(fmt.Sprintf("/api/arguments/%s", a3.ID.String()))
 	res, _ := r.Run(Router())
 	assert.Equal(t, string(expectedResults), res.Body.String())
-	assert.Equal(t, http.StatusOK, res.Status())
+	assert.Equal(t, http.StatusOK, res.Code)
 }
 
 func TestCreateArgumentForClaim(t *testing.T) {
@@ -239,7 +240,7 @@ func TestCreateArgumentForClaim(t *testing.T) {
 	r.POST("/api/arguments")
 	r.SetBody(a1)
 	res, _ := r.Run(Router())
-	assert.Equal(t, http.StatusCreated, res.Status())
+	assert.Equal(t, http.StatusCreated, res.Code)
 
 	TESTDB.Where("title = ?", a1.Title).First(&a1)
 	expectedResults, _ := json.Marshal(a1)
@@ -295,7 +296,7 @@ func TestCreateArgumentForArgument(t *testing.T) {
 	r.POST("/api/arguments")
 	r.SetBody(a2)
 	res, _ := r.Run(Router())
-	assert.Equal(t, http.StatusCreated, res.Status())
+	assert.Equal(t, http.StatusCreated, res.Code)
 
 	TESTDB.Where("title = ?", a2.Title).First(&a2)
 	expectedResults, _ := json.Marshal(a2)
@@ -317,8 +318,8 @@ func TestCreateArgumentNoClaim(t *testing.T) {
 	r.POST("/api/arguments")
 	r.SetBody(a1)
 	res, _ := r.Run(Router())
-	//assert.Equal(t, 400, res.Status())
-	assert.Equal(t, 500, res.Status())
+	//assert.Equal(t, 400, res.Code)
+	assert.Equal(t, 500, res.Code)
 }
 
 func TestCreateArgumentWithNewClaim(t *testing.T) {
@@ -349,7 +350,7 @@ func TestCreateArgumentWithNewClaim(t *testing.T) {
 	r.POST("/api/arguments")
 	r.SetBody(a1)
 	res, _ := r.Run(Router())
-	assert.Equal(t, http.StatusCreated, res.Status())
+	assert.Equal(t, http.StatusCreated, res.Code)
 
 	TESTDB.Preload("Claim").Where("title = ?", a1.Title).First(&a1)
 	expectedResults, _ := json.Marshal(a1)
@@ -406,7 +407,7 @@ func TestCreateArgumentForArgumentWithNewClaim(t *testing.T) {
 	r.POST("/api/arguments")
 	r.SetBody(a2)
 	res, _ := r.Run(Router())
-	assert.Equal(t, http.StatusCreated, res.Status())
+	assert.Equal(t, http.StatusCreated, res.Code)
 
 	TESTDB.Preload("Claim").Where("title = ?", a2.Title).First(&a2)
 	expectedResults, _ := json.Marshal(a2)
@@ -445,7 +446,7 @@ func TestCreateArgumentWithNewClaimNoArgData(t *testing.T) {
 	r.POST("/api/arguments")
 	r.SetBody(a1)
 	res, _ := r.Run(Router())
-	assert.Equal(t, http.StatusCreated, res.Status())
+	assert.Equal(t, http.StatusCreated, res.Code)
 
 	TESTDB.Preload("Claim").Where("title = ?", d1.Title).First(&a1)
 	expectedResults, _ := json.Marshal(a1)
@@ -472,7 +473,7 @@ func TestUpdateArgument(t *testing.T) {
 	r.PUT(fmt.Sprintf("/api/arguments/%s", a1.ID))
 	r.SetBody(a1)
 	res, _ := r.Run(Router())
-	assert.Equal(t, http.StatusAccepted, res.Status())
+	assert.Equal(t, http.StatusAccepted, res.Code)
 }
 
 func TestDeleteArgument(t *testing.T) {
@@ -485,7 +486,7 @@ func TestDeleteArgument(t *testing.T) {
 
 	r.DELETE(fmt.Sprintf("/api/arguments/%s", a1.ID))
 	res, _ := r.Run(Router())
-	assert.Equal(t, http.StatusOK, res.Status())
+	assert.Equal(t, http.StatusOK, res.Code)
 }
 
 func createArgument() gruff.Argument {

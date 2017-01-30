@@ -3,10 +3,11 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/bigokro/gruff-server/gruff"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"testing"
+
+	"github.com/bigokro/gruff-server/gruff"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestListTags(t *testing.T) {
@@ -25,7 +26,7 @@ func TestListTags(t *testing.T) {
 	r.GET("/api/tags")
 	res, _ := r.Run(Router())
 	assert.Equal(t, string(expectedResults), res.Body.String())
-	assert.Equal(t, http.StatusOK, res.Status())
+	assert.Equal(t, http.StatusOK, res.Code)
 }
 
 func TestListTagsPagination(t *testing.T) {
@@ -41,7 +42,7 @@ func TestListTagsPagination(t *testing.T) {
 
 	r.GET("/api/tags?start=0&limit=25")
 	res, _ := r.Run(Router())
-	assert.Equal(t, http.StatusOK, res.Status())
+	assert.Equal(t, http.StatusOK, res.Code)
 }
 
 func TestGetTags(t *testing.T) {
@@ -58,7 +59,7 @@ func TestGetTags(t *testing.T) {
 	r.GET(fmt.Sprintf("/api/tags/%d", u1.ID))
 	res, _ := r.Run(Router())
 	assert.Equal(t, string(expectedResults), res.Body.String())
-	assert.Equal(t, http.StatusOK, res.Status())
+	assert.Equal(t, http.StatusOK, res.Code)
 }
 
 func TestCreateTags(t *testing.T) {
@@ -72,7 +73,7 @@ func TestCreateTags(t *testing.T) {
 	r.POST("/api/tags")
 	r.SetBody(u1)
 	res, _ := r.Run(Router())
-	assert.Equal(t, http.StatusCreated, res.Status())
+	assert.Equal(t, http.StatusCreated, res.Code)
 }
 
 func TestUpdateTags(t *testing.T) {
@@ -87,7 +88,7 @@ func TestUpdateTags(t *testing.T) {
 	r.PUT(fmt.Sprintf("/api/tags/%d", u1.ID))
 	r.SetBody(u1)
 	res, _ := r.Run(Router())
-	assert.Equal(t, http.StatusAccepted, res.Status())
+	assert.Equal(t, http.StatusAccepted, res.Code)
 }
 
 func TestDeleteTags(t *testing.T) {
@@ -100,7 +101,7 @@ func TestDeleteTags(t *testing.T) {
 
 	r.DELETE(fmt.Sprintf("/api/tags/%d", u1.ID))
 	res, _ := r.Run(Router())
-	assert.Equal(t, http.StatusOK, res.Status())
+	assert.Equal(t, http.StatusOK, res.Code)
 }
 
 func createTag() gruff.Tag {

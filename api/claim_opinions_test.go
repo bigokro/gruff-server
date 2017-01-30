@@ -3,11 +3,12 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"testing"
+
 	"github.com/bigokro/gruff-server/gruff"
 	"github.com/jinzhu/gorm"
 	"github.com/stretchr/testify/assert"
-	"net/http"
-	"testing"
 )
 
 func TestListClaimOpinions(t *testing.T) {
@@ -26,7 +27,7 @@ func TestListClaimOpinions(t *testing.T) {
 	r.GET("/api/claim_opinions")
 	res, _ := r.Run(Router())
 	assert.Equal(t, string(expectedResults), res.Body.String())
-	assert.Equal(t, http.StatusOK, res.Status())
+	assert.Equal(t, http.StatusOK, res.Code)
 }
 
 func TestListClaimOpinionsPagination(t *testing.T) {
@@ -42,7 +43,7 @@ func TestListClaimOpinionsPagination(t *testing.T) {
 
 	r.GET("/api/claim_opinions?start=0&limit=25")
 	res, _ := r.Run(Router())
-	assert.Equal(t, http.StatusOK, res.Status())
+	assert.Equal(t, http.StatusOK, res.Code)
 }
 
 func TestGetClaimOpinions(t *testing.T) {
@@ -59,7 +60,7 @@ func TestGetClaimOpinions(t *testing.T) {
 	r.GET(fmt.Sprintf("/api/claim_opinions/%d", u1.ID))
 	res, _ := r.Run(Router())
 	assert.Equal(t, string(expectedResults), res.Body.String())
-	assert.Equal(t, http.StatusOK, res.Status())
+	assert.Equal(t, http.StatusOK, res.Code)
 }
 
 func TestCreateClaimOpinions(t *testing.T) {
@@ -73,7 +74,7 @@ func TestCreateClaimOpinions(t *testing.T) {
 	r.POST("/api/claim_opinions")
 	r.SetBody(u1)
 	res, _ := r.Run(Router())
-	assert.Equal(t, http.StatusCreated, res.Status())
+	assert.Equal(t, http.StatusCreated, res.Code)
 }
 
 func TestUpdateClaimOpinions(t *testing.T) {
@@ -88,7 +89,7 @@ func TestUpdateClaimOpinions(t *testing.T) {
 	r.PUT(fmt.Sprintf("/api/claim_opinions/%d", u1.ID))
 	r.SetBody(u1)
 	res, _ := r.Run(Router())
-	assert.Equal(t, http.StatusAccepted, res.Status())
+	assert.Equal(t, http.StatusAccepted, res.Code)
 }
 
 func TestDeleteClaimOpinions(t *testing.T) {
@@ -101,7 +102,7 @@ func TestDeleteClaimOpinions(t *testing.T) {
 
 	r.DELETE(fmt.Sprintf("/api/claim_opinions/%d", u1.ID))
 	res, _ := r.Run(Router())
-	assert.Equal(t, http.StatusOK, res.Status())
+	assert.Equal(t, http.StatusOK, res.Code)
 }
 
 func createClaimOpinion(db *gorm.DB) gruff.ClaimOpinion {

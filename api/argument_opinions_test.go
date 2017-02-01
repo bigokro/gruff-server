@@ -3,12 +3,13 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"testing"
+
 	"github.com/bigokro/gruff-server/gruff"
 	"github.com/jinzhu/gorm"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/crypto/bcrypt"
-	"net/http"
-	"testing"
 )
 
 func TestListArgumentOpinions(t *testing.T) {
@@ -27,7 +28,7 @@ func TestListArgumentOpinions(t *testing.T) {
 	r.GET("/api/argument_opinions")
 	res, _ := r.Run(Router())
 	assert.Equal(t, string(expectedResults), res.Body.String())
-	assert.Equal(t, http.StatusOK, res.Status())
+	assert.Equal(t, http.StatusOK, res.Code)
 }
 
 func TestListArgumentOpinionsPagination(t *testing.T) {
@@ -43,7 +44,7 @@ func TestListArgumentOpinionsPagination(t *testing.T) {
 
 	r.GET("/api/argument_opinions?start=0&limit=25")
 	res, _ := r.Run(Router())
-	assert.Equal(t, http.StatusOK, res.Status())
+	assert.Equal(t, http.StatusOK, res.Code)
 }
 
 func TestGetArgumentOpinions(t *testing.T) {
@@ -60,7 +61,7 @@ func TestGetArgumentOpinions(t *testing.T) {
 	r.GET(fmt.Sprintf("/api/argument_opinions/%d", u1.ID))
 	res, _ := r.Run(Router())
 	assert.Equal(t, string(expectedResults), res.Body.String())
-	assert.Equal(t, http.StatusOK, res.Status())
+	assert.Equal(t, http.StatusOK, res.Code)
 }
 
 func TestCreateArgumentOpinions(t *testing.T) {
@@ -74,7 +75,7 @@ func TestCreateArgumentOpinions(t *testing.T) {
 	r.POST("/api/argument_opinions")
 	r.SetBody(u1)
 	res, _ := r.Run(Router())
-	assert.Equal(t, http.StatusCreated, res.Status())
+	assert.Equal(t, http.StatusCreated, res.Code)
 }
 
 func TestUpdateArgumentOpinions(t *testing.T) {
@@ -89,7 +90,7 @@ func TestUpdateArgumentOpinions(t *testing.T) {
 	r.PUT(fmt.Sprintf("/api/argument_opinions/%d", u1.ID))
 	r.SetBody(u1)
 	res, _ := r.Run(Router())
-	assert.Equal(t, http.StatusAccepted, res.Status())
+	assert.Equal(t, http.StatusAccepted, res.Code)
 }
 
 func TestDeleteArgumentOpinions(t *testing.T) {
@@ -102,7 +103,7 @@ func TestDeleteArgumentOpinions(t *testing.T) {
 
 	r.DELETE(fmt.Sprintf("/api/argument_opinions/%d", u1.ID))
 	res, _ := r.Run(Router())
-	assert.Equal(t, http.StatusOK, res.Status())
+	assert.Equal(t, http.StatusOK, res.Code)
 }
 
 func createArgumentOpinion(db *gorm.DB) gruff.ArgumentOpinion {

@@ -3,10 +3,11 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/bigokro/gruff-server/gruff"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"testing"
+
+	"github.com/bigokro/gruff-server/gruff"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestListContexts(t *testing.T) {
@@ -25,7 +26,7 @@ func TestListContexts(t *testing.T) {
 	r.GET("/api/contexts")
 	res, _ := r.Run(Router())
 	assert.Equal(t, string(expectedResults), res.Body.String())
-	assert.Equal(t, http.StatusOK, res.Status())
+	assert.Equal(t, http.StatusOK, res.Code)
 }
 
 func TestListContextsPagination(t *testing.T) {
@@ -41,7 +42,7 @@ func TestListContextsPagination(t *testing.T) {
 
 	r.GET("/api/contexts?start=0&limit=25")
 	res, _ := r.Run(Router())
-	assert.Equal(t, http.StatusOK, res.Status())
+	assert.Equal(t, http.StatusOK, res.Code)
 }
 
 func TestGetContexts(t *testing.T) {
@@ -58,7 +59,7 @@ func TestGetContexts(t *testing.T) {
 	r.GET(fmt.Sprintf("/api/contexts/%d", u1.ID))
 	res, _ := r.Run(Router())
 	assert.Equal(t, string(expectedResults), res.Body.String())
-	assert.Equal(t, http.StatusOK, res.Status())
+	assert.Equal(t, http.StatusOK, res.Code)
 }
 
 func TestCreateContexts(t *testing.T) {
@@ -72,7 +73,7 @@ func TestCreateContexts(t *testing.T) {
 	r.POST("/api/contexts")
 	r.SetBody(u1)
 	res, _ := r.Run(Router())
-	assert.Equal(t, http.StatusCreated, res.Status())
+	assert.Equal(t, http.StatusCreated, res.Code)
 }
 
 func TestUpdateContexts(t *testing.T) {
@@ -87,7 +88,7 @@ func TestUpdateContexts(t *testing.T) {
 	r.PUT(fmt.Sprintf("/api/contexts/%d", u1.ID))
 	r.SetBody(u1)
 	res, _ := r.Run(Router())
-	assert.Equal(t, http.StatusAccepted, res.Status())
+	assert.Equal(t, http.StatusAccepted, res.Code)
 }
 
 func TestDeleteContexts(t *testing.T) {
@@ -100,7 +101,7 @@ func TestDeleteContexts(t *testing.T) {
 
 	r.DELETE(fmt.Sprintf("/api/contexts/%d", u1.ID))
 	res, _ := r.Run(Router())
-	assert.Equal(t, http.StatusOK, res.Status())
+	assert.Equal(t, http.StatusOK, res.Code)
 }
 
 func createContext() gruff.Context {

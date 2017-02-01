@@ -3,11 +3,12 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"testing"
+
 	"github.com/bigokro/gruff-server/gruff"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/crypto/bcrypt"
-	"net/http"
-	"testing"
 )
 
 func TestListUsers(t *testing.T) {
@@ -26,7 +27,7 @@ func TestListUsers(t *testing.T) {
 	r.GET("/api/users")
 	res, _ := r.Run(Router())
 	assert.Equal(t, string(expectedResults), res.Body.String())
-	assert.Equal(t, http.StatusOK, res.Status())
+	assert.Equal(t, http.StatusOK, res.Code)
 }
 
 func TestListUsersPagination(t *testing.T) {
@@ -42,7 +43,7 @@ func TestListUsersPagination(t *testing.T) {
 
 	r.GET("/api/users?start=0&limit=25")
 	res, _ := r.Run(Router())
-	assert.Equal(t, http.StatusOK, res.Status())
+	assert.Equal(t, http.StatusOK, res.Code)
 }
 
 func TestGetUsers(t *testing.T) {
@@ -59,7 +60,7 @@ func TestGetUsers(t *testing.T) {
 	r.GET(fmt.Sprintf("/api/users/%d", u1.ID))
 	res, _ := r.Run(Router())
 	assert.Equal(t, string(expectedResults), res.Body.String())
-	assert.Equal(t, http.StatusOK, res.Status())
+	assert.Equal(t, http.StatusOK, res.Code)
 }
 
 func TestCreateUsers(t *testing.T) {
@@ -73,7 +74,7 @@ func TestCreateUsers(t *testing.T) {
 	r.POST("/api/users")
 	r.SetBody(u1)
 	res, _ := r.Run(Router())
-	assert.Equal(t, http.StatusCreated, res.Status())
+	assert.Equal(t, http.StatusCreated, res.Code)
 }
 
 func TestUpdateUsers(t *testing.T) {
@@ -88,7 +89,7 @@ func TestUpdateUsers(t *testing.T) {
 	r.PUT(fmt.Sprintf("/api/users/%d", u1.ID))
 	r.SetBody(u1)
 	res, _ := r.Run(Router())
-	assert.Equal(t, http.StatusAccepted, res.Status())
+	assert.Equal(t, http.StatusAccepted, res.Code)
 }
 
 func TestDeleteUsers(t *testing.T) {
@@ -101,7 +102,7 @@ func TestDeleteUsers(t *testing.T) {
 
 	r.DELETE(fmt.Sprintf("/api/users/%d", u1.ID))
 	res, _ := r.Run(Router())
-	assert.Equal(t, http.StatusOK, res.Status())
+	assert.Equal(t, http.StatusOK, res.Code)
 }
 
 func createUser(name string, username string, email string) gruff.User {

@@ -3,10 +3,11 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/bigokro/gruff-server/gruff"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"testing"
+
+	"github.com/bigokro/gruff-server/gruff"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestListClaims(t *testing.T) {
@@ -25,7 +26,7 @@ func TestListClaims(t *testing.T) {
 	r.GET("/api/claims")
 	res, _ := r.Run(Router())
 	assert.Equal(t, string(expectedResults), res.Body.String())
-	assert.Equal(t, http.StatusOK, res.Status())
+	assert.Equal(t, http.StatusOK, res.Code)
 }
 
 func TestListClaimsPagination(t *testing.T) {
@@ -41,7 +42,7 @@ func TestListClaimsPagination(t *testing.T) {
 
 	r.GET("/api/claims?start=0&limit=25")
 	res, _ := r.Run(Router())
-	assert.Equal(t, http.StatusOK, res.Status())
+	assert.Equal(t, http.StatusOK, res.Code)
 }
 
 func TestListTopClaims(t *testing.T) {
@@ -233,7 +234,7 @@ func TestGetClaim(t *testing.T) {
 	r.GET(fmt.Sprintf("/api/claims/%s", d1.ID.String()))
 	res, _ := r.Run(Router())
 	assert.Equal(t, string(expectedResults), res.Body.String())
-	assert.Equal(t, http.StatusOK, res.Status())
+	assert.Equal(t, http.StatusOK, res.Code)
 }
 
 func TestCreateClaim(t *testing.T) {
@@ -247,7 +248,7 @@ func TestCreateClaim(t *testing.T) {
 	r.POST("/api/claims")
 	r.SetBody(u1)
 	res, _ := r.Run(Router())
-	assert.Equal(t, http.StatusCreated, res.Status())
+	assert.Equal(t, http.StatusCreated, res.Code)
 }
 
 func TestUpdateClaim(t *testing.T) {
@@ -262,7 +263,7 @@ func TestUpdateClaim(t *testing.T) {
 	r.PUT(fmt.Sprintf("/api/claims/%s", u1.ID))
 	r.SetBody(u1)
 	res, _ := r.Run(Router())
-	assert.Equal(t, http.StatusAccepted, res.Status())
+	assert.Equal(t, http.StatusAccepted, res.Code)
 }
 
 func TestDeleteClaim(t *testing.T) {
@@ -275,7 +276,7 @@ func TestDeleteClaim(t *testing.T) {
 
 	r.DELETE(fmt.Sprintf("/api/claims/%s", u1.ID))
 	res, _ := r.Run(Router())
-	assert.Equal(t, http.StatusOK, res.Status())
+	assert.Equal(t, http.StatusOK, res.Code)
 }
 
 func createClaim() gruff.Claim {

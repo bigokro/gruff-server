@@ -3,10 +3,11 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/bigokro/gruff-server/gruff"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"testing"
+
+	"github.com/bigokro/gruff-server/gruff"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestListLinks(t *testing.T) {
@@ -25,7 +26,7 @@ func TestListLinks(t *testing.T) {
 	r.GET("/api/links")
 	res, _ := r.Run(Router())
 	assert.Equal(t, string(expectedResults), res.Body.String())
-	assert.Equal(t, http.StatusOK, res.Status())
+	assert.Equal(t, http.StatusOK, res.Code)
 }
 
 func TestListLinksPagination(t *testing.T) {
@@ -41,7 +42,7 @@ func TestListLinksPagination(t *testing.T) {
 
 	r.GET("/api/links?start=0&limit=25")
 	res, _ := r.Run(Router())
-	assert.Equal(t, http.StatusOK, res.Status())
+	assert.Equal(t, http.StatusOK, res.Code)
 }
 
 func TestGetLink(t *testing.T) {
@@ -59,7 +60,7 @@ func TestGetLink(t *testing.T) {
 	r.GET(fmt.Sprintf("/api/links/%s", u1.ID))
 	res, _ := r.Run(Router())
 	assert.Equal(t, string(expectedResults), res.Body.String())
-	assert.Equal(t, http.StatusOK, res.Status())
+	assert.Equal(t, http.StatusOK, res.Code)
 }
 
 func TestCreateLink(t *testing.T) {
@@ -73,7 +74,7 @@ func TestCreateLink(t *testing.T) {
 	r.POST("/api/links")
 	r.SetBody(u1)
 	res, _ := r.Run(Router())
-	assert.Equal(t, http.StatusCreated, res.Status())
+	assert.Equal(t, http.StatusCreated, res.Code)
 }
 
 func TestUpdateLink(t *testing.T) {
@@ -88,7 +89,7 @@ func TestUpdateLink(t *testing.T) {
 	r.PUT(fmt.Sprintf("/api/links/%s", u1.ID))
 	r.SetBody(u1)
 	res, _ := r.Run(Router())
-	assert.Equal(t, http.StatusAccepted, res.Status())
+	assert.Equal(t, http.StatusAccepted, res.Code)
 }
 
 func TestDeleteLink(t *testing.T) {
@@ -101,7 +102,7 @@ func TestDeleteLink(t *testing.T) {
 
 	r.DELETE(fmt.Sprintf("/api/links/%s", u1.ID))
 	res, _ := r.Run(Router())
-	assert.Equal(t, http.StatusOK, res.Status())
+	assert.Equal(t, http.StatusOK, res.Code)
 }
 
 func createLink() gruff.Link {

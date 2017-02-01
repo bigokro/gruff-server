@@ -55,3 +55,24 @@ func (ctx *Context) GetClaim(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, claim)
 }
+
+func (ctx *Context) ListTopClaims(c echo.Context) error {
+	claims := []gruff.Claim{}
+
+	db := ctx.Database
+	db = BasicJoins(ctx, c, db)
+	db = db.Where("0 = (SELECT COUNT(*) FROM arguments WHERE claim_id = claims.id)")
+	db = BasicPaging(ctx, c, db)
+
+	err := db.Find(&claims).Error
+	if err != nil {
+		return gruff.NewServerError(err.Error())
+	}
+
+	if ctx.Payload["ct"] != nil {
+		ctx.Payload["results"] = claims
+		return c.JSON(http.StatusOK, ctx.Payload)
+	} else {
+		return c.JSON(http.StatusOK, claims)
+	}
+}

@@ -44,6 +44,41 @@ func TestListClaimsPagination(t *testing.T) {
 	assert.Equal(t, http.StatusOK, res.Status())
 }
 
+func TestListTopClaims(t *testing.T) {
+	setup()
+	defer teardown()
+
+	r := New(Token)
+
+	c1 := createClaim()
+	c2 := createClaim()
+	c3 := createClaim()
+	c4 := createClaim()
+	c5 := createClaim()
+	TESTDB.Create(&c1)
+	TESTDB.Create(&c2)
+	TESTDB.Create(&c3)
+	TESTDB.Create(&c4)
+	TESTDB.Create(&c5)
+
+	a1 := gruff.Argument{TargetClaimID: gruff.NUUID(c1.ID), ClaimID: c2.ID, Type: 1}
+	a2 := gruff.Argument{TargetClaimID: gruff.NUUID(c1.ID), ClaimID: c3.ID, Type: 2}
+	TESTDB.Create(&a1)
+	TESTDB.Create(&a2)
+
+	a3 := gruff.Argument{TargetArgumentID: gruff.NUUID(a2.ID), ClaimID: c2.ID, Type: 3}
+	a4 := gruff.Argument{TargetArgumentID: gruff.NUUID(a2.ID), ClaimID: c5.ID, Type: 4}
+	TESTDB.Create(&a3)
+	TESTDB.Create(&a4)
+
+	expectedResults, _ := json.Marshal([]gruff.Claim{c1, c4})
+
+	r.GET("/api/claims/top")
+	res, _ := r.Run(Router())
+	assert.Equal(t, string(expectedResults), res.Body.String())
+	assert.Equal(t, http.StatusOK, res.Status())
+}
+
 func TestGetClaim(t *testing.T) {
 	setup()
 	defer teardown()

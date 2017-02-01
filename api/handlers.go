@@ -50,7 +50,7 @@ func (ctx *Context) Create(c echo.Context) error {
 		// TODO: extract to middleware
 		user := c.Get("user").(*jwt.Token)
 		claims := user.Claims.(jwt.MapClaims)
-		//fmt.Printf("Claims: %+v\n", claims)
+		fmt.Printf("Claims: %+v\n", claims)
 		if claims["id"] != nil {
 			id := claims["id"].(float64)
 			gruff.SetCreatedByID(item, uint64(id))

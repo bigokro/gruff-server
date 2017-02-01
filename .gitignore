@@ -2,6 +2,7 @@
 *.o
 *.a
 *.so
+gruff-server
 
 # Folders
 _obj

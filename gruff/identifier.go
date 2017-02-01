@@ -95,3 +95,7 @@ func (u *NullableUUID) UnmarshalText(data []byte) error {
 	u.UUID = parsed
 	return nil
 }
+
+func NUUID(id uuid.UUID) *NullableUUID {
+	return &NullableUUID{UUID: id}
+}

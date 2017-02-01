@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	"github.com/bigokro/gruff-server/gruff"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/google/uuid"
 	"github.com/labstack/echo"
 	"net/http"
@@ -98,10 +99,20 @@ func (ctx *Context) CreateArgument(c echo.Context) error {
 		return err
 	}
 
+	// TODO: extract to middleware
+	user := c.Get("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	fmt.Printf("Claims: %+v\n", claims)
+	if claims["id"] != nil {
+		userid := claims["id"].(float64)
+		arg.CreatedByID = uint64(userid)
+	}
+
 	if arg.ClaimID == uuid.Nil {
 		// First create a new Claim for this argument
 		// TODO: grab a title from a sub debate sent with the post data
 		claim := gruff.Claim{Title: arg.Title, Description: arg.Description}
+		claim.CreatedByID = arg.CreatedByID
 		if arg.Claim.Title != "" {
 			claim.Title = arg.Claim.Title
 			if arg.Title == "" {

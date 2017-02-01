@@ -77,7 +77,7 @@ func TestListTopClaims(t *testing.T) {
 	r.GET("/api/claims/top")
 	res, _ := r.Run(Router())
 	assert.Equal(t, string(expectedResults), res.Body.String())
-	assert.Equal(t, http.StatusOK, res.Status())
+	assert.Equal(t, http.StatusOK, res.Result().StatusCode)
 }
 
 func TestGetClaim(t *testing.T) {

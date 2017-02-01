@@ -47,14 +47,7 @@ func (ctx *Context) Create(c echo.Context) error {
 	}
 
 	if gruff.IsIdentifier(ctx.Type) {
-		// TODO: extract to middleware
-		user := c.Get("user").(*jwt.Token)
-		claims := user.Claims.(jwt.MapClaims)
-		fmt.Printf("Claims: %+v\n", claims)
-		if claims["id"] != nil {
-			id := claims["id"].(float64)
-			gruff.SetCreatedByID(item, uint64(id))
-		}
+		gruff.SetCreatedByID(item, CurrentUserID(c))
 	}
 
 	dberr := ctx.Database.Create(item).Error
@@ -312,4 +305,27 @@ func BasicValidationForUpdate(ctx *Context, c echo.Context, item interface{}) er
 	} else {
 		return nil
 	}
+}
+
+func CurrentUserID(c echo.Context) uint64 {
+	// TODO: extract to middleware
+	user := c.Get("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	fmt.Printf("Claims: %+v\n", claims)
+	if claims["id"] != nil {
+		id := claims["id"].(float64)
+		return uint64(id)
+	}
+
+	return 0
+}
+
+// TODO: use GruffError...
+func CurrentUser(c echo.Context, db *gorm.DB) (gruff.User, error) {
+	// TODO: extract to middleware
+	userId := CurrentUserID(c)
+	fmt.Println("UserId:", userId)
+	user := gruff.User{}
+	err := db.First(&user, userId).Error
+	return user, err
 }

@@ -58,27 +58,10 @@ func (ctx *Context) SignIn(c echo.Context) error {
 
 		if ok, _ := verifyPassword(user, u.Password); ok {
 
-			claims := &jwtCustomClaims{
-				user.ID,
-				user.Name,
-				user.Username,
-				user.Image,
-				user.Curator,
-				user.Admin,
-				jwt.StandardClaims{
-					ExpiresAt: time.Now().Add(time.Hour * 72).Unix(),
-				},
-			}
-
-			fmt.Println("Claims:", claims)
-
-			token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-			t, err := token.SignedString([]byte("secret"))
+			t, err := TokenForUser(user)
 			if err != nil {
 				return c.String(http.StatusUnauthorized, "Unauthorized")
 			}
-
 			u := map[string]interface{}{"user": user, "token": t}
 
 			return c.JSON(http.StatusOK, u)
@@ -87,6 +70,27 @@ func (ctx *Context) SignIn(c echo.Context) error {
 	}
 
 	return c.String(http.StatusUnauthorized, "Unauthorized")
+}
+
+func TokenForUser(user gruff.User) (string, error) {
+	claims := &jwtCustomClaims{
+		user.ID,
+		user.Name,
+		user.Username,
+		user.Image,
+		user.Curator,
+		user.Admin,
+		jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(time.Hour * 72).Unix(),
+		},
+	}
+
+	fmt.Println("Claims:", claims)
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	t, err := token.SignedString([]byte("secret"))
+	return t, err
 }
 
 func verifyPassword(user gruff.User, password string) (bool, error) {

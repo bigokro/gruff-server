@@ -3,7 +3,6 @@ package api
 import (
 	"fmt"
 	"github.com/bigokro/gruff-server/gruff"
-	"github.com/dgrijalva/jwt-go"
 	"github.com/google/uuid"
 	"github.com/labstack/echo"
 	"net/http"
@@ -99,14 +98,7 @@ func (ctx *Context) CreateArgument(c echo.Context) error {
 		return err
 	}
 
-	// TODO: extract to middleware
-	user := c.Get("user").(*jwt.Token)
-	claims := user.Claims.(jwt.MapClaims)
-	fmt.Printf("Claims: %+v\n", claims)
-	if claims["id"] != nil {
-		userid := claims["id"].(float64)
-		arg.CreatedByID = uint64(userid)
-	}
+	arg.CreatedByID = CurrentUserID(c)
 
 	if arg.ClaimID == uuid.Nil {
 		// First create a new Claim for this argument

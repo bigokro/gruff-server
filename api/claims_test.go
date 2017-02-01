@@ -3,11 +3,10 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
-	"testing"
-
 	"github.com/bigokro/gruff-server/gruff"
 	"github.com/stretchr/testify/assert"
+	"net/http"
+	"testing"
 )
 
 func TestListClaims(t *testing.T) {
@@ -277,6 +276,65 @@ func TestDeleteClaim(t *testing.T) {
 	r.DELETE(fmt.Sprintf("/api/claims/%s", u1.ID))
 	res, _ := r.Run(Router())
 	assert.Equal(t, http.StatusOK, res.Code)
+}
+
+func TestSetTruthScore(t *testing.T) {
+	setup()
+	defer teardown()
+	u := createTestUser()
+	r := New(tokenForTestUser(u))
+
+	c1 := createClaim()
+	c2 := createClaim()
+	TESTDB.Create(&c1)
+	TESTDB.Create(&c2)
+
+	m := map[string]interface{}{
+		"score": 0.2394,
+	}
+
+	r.POST(fmt.Sprintf("/api/claims/%s/truth", c1.ID))
+	r.SetBody(m)
+	res, _ := r.Run(Router())
+	assert.Equal(t, http.StatusCreated, res.Code)
+
+	co := gruff.ClaimOpinion{}
+	err := TESTDB.Where("user_id = ?", u.ID).Where("claim_id = ?", c1.ID).First(&co).Error
+	assert.Nil(t, err)
+	assert.Equal(t, 0.2394, co.Truth)
+}
+
+func TestSetTruthScoreUpdate(t *testing.T) {
+	setup()
+	defer teardown()
+	u := createTestUser()
+	r := New(tokenForTestUser(u))
+
+	c1 := createClaim()
+	c2 := createClaim()
+	TESTDB.Create(&c1)
+	TESTDB.Create(&c2)
+
+	co := gruff.ClaimOpinion{
+		UserID:  u.ID,
+		ClaimID: c1.ID,
+		Truth:   0.8239,
+	}
+	TESTDB.Create(&co)
+
+	m := map[string]interface{}{
+		"score": 0.2394,
+	}
+
+	r.POST(fmt.Sprintf("/api/claims/%s/truth", c1.ID))
+	r.SetBody(m)
+	res, _ := r.Run(Router())
+	assert.Equal(t, http.StatusAccepted, res.Code)
+
+	co = gruff.ClaimOpinion{}
+	err := TESTDB.Where("user_id = ?", u.ID).Where("claim_id = ?", c1.ID).First(&co).Error
+	assert.Nil(t, err)
+	assert.Equal(t, 0.2394, co.Truth)
 }
 
 func createClaim() gruff.Claim {

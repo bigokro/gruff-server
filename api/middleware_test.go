@@ -3,13 +3,14 @@ package api
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
+	"github.com/bigokro/gruff-server/gruff"
+	"github.com/labstack/echo"
 	"log"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strings"
-
-	"github.com/labstack/echo"
 )
 
 const (
@@ -34,6 +35,23 @@ type RequestConfig struct {
 	Headers H
 	Cookies H
 	Debug   bool
+}
+
+func createTestUser() gruff.User {
+	u := gruff.User{
+		Name:     "John Doe",
+		Username: "john.doe",
+		Email:    "john.doe@gruff.com",
+	}
+	TESTDB.Create(&u)
+	return u
+}
+
+func tokenForTestUser(u gruff.User) map[string]string {
+	token, _ := TokenForUser(u)
+	return map[string]string{
+		"Authorization": fmt.Sprintf("Bearer %s", token),
+	}
 }
 
 func New(Authorization map[string]string) *RequestConfig {

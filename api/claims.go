@@ -1,11 +1,14 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 	"github.com/bigokro/gruff-server/gruff"
 	"github.com/google/uuid"
 	"github.com/labstack/echo"
 	"net/http"
+	"reflect"
+	"strings"
 )
 
 func Claims(c echo.Context) error {
@@ -78,17 +81,45 @@ func (ctx *Context) ListTopClaims(c echo.Context) error {
 	}
 }
 
-func (ctx *Context) SetTruthScore(c echo.Context) error {
+func (ctx *Context) SetScore(c echo.Context) error {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.String(http.StatusNotFound, "NotFound")
 		return err
 	}
 
-	claim := gruff.Claim{}
+	user, err := CurrentUser(c, ctx.Database)
+	if err != nil {
+		c.String(http.StatusUnauthorized, "NotAuthorized")
+		return err
+	}
+
+	paths := strings.Split(c.Path(), "/")
+	scoreType := paths[len(paths)-1]
+
+	var claim bool
+	var target, item interface{}
+
+	switch scoreType {
+	case "truth":
+		claim = true
+		target = &gruff.Claim{}
+		item = &gruff.ClaimOpinion{UserID: user.ID, ClaimID: id}
+	case "impact":
+		claim = false
+		target = &gruff.Argument{}
+		item = &gruff.ArgumentOpinion{UserID: user.ID, ArgumentID: id}
+	case "relevance":
+		claim = false
+		target = &gruff.Argument{}
+		item = &gruff.ArgumentOpinion{UserID: user.ID, ArgumentID: id}
+	default:
+		c.String(http.StatusNotFound, "NotFound")
+		return errors.New("Not found")
+	}
 
 	db := ctx.Database
-	err = db.Where("id = ?", id).First(&claim).Error
+	err = db.Where("id = ?", id).First(target).Error
 	if err != nil {
 		c.String(http.StatusNotFound, "NotFound")
 		return err
@@ -104,28 +135,32 @@ func (ctx *Context) SetTruthScore(c echo.Context) error {
 		score = val.(float64)
 	}
 
-	user, err := CurrentUser(c, ctx.Database)
-	if err != nil {
-		c.String(http.StatusUnauthorized, "NotAuthorized")
-		return err
-	}
-
-	co := gruff.ClaimOpinion{}
 	db = ctx.Database
 	db = db.Where("user_id = ?", user.ID)
-	db = db.Where("claim_id = ?", id)
-	if err := db.First(&co).Error; err != nil {
-		co.Truth = score
-		co.UserID = user.ID
-		co.ClaimID = claim.ID
-		db = ctx.Database
-		err = db.Create(&co).Error
-		return c.JSON(http.StatusCreated, co)
+	if claim {
+		db = db.Where("claim_id = ?", id)
 	} else {
-		co.Truth = score
+		db = db.Where("argument_id = ?", id)
+	}
+	if err := db.First(item).Error; err != nil {
+		setScore(item, scoreType, score)
 		db = ctx.Database
-		err = db.Save(&co).Error
-		return c.JSON(http.StatusAccepted, co)
+		err = db.Create(item).Error
+		return c.JSON(http.StatusCreated, item)
+	} else {
+		setScore(item, scoreType, score)
+		db = ctx.Database
+		err = db.Save(item).Error
+		return c.JSON(http.StatusAccepted, item)
 	}
 
+}
+
+func setScore(item interface{}, field string, score float64) {
+	v := reflect.ValueOf(item)
+	if v.Kind() == reflect.Ptr {
+		v = reflect.ValueOf(item).Elem()
+	}
+	f := v.FieldByName(strings.Title(field))
+	f.Set(reflect.ValueOf(score))
 }

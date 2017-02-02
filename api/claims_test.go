@@ -337,6 +337,140 @@ func TestSetTruthScoreUpdate(t *testing.T) {
 	assert.Equal(t, 0.2394, co.Truth)
 }
 
+func TestSetScoreImpact(t *testing.T) {
+	setup()
+	defer teardown()
+	u := createTestUser()
+	r := New(tokenForTestUser(u))
+
+	c1 := createClaim()
+	c2 := createClaim()
+	TESTDB.Create(&c1)
+	TESTDB.Create(&c2)
+
+	a := gruff.Argument{TargetClaimID: gruff.NUUID(c1.ID), ClaimID: c2.ID, Title: "An arg"}
+	TESTDB.Create(&a)
+
+	m := map[string]interface{}{
+		"score": 0.2394,
+	}
+
+	r.POST(fmt.Sprintf("/api/arguments/%s/impact", a.ID))
+	r.SetBody(m)
+	res, _ := r.Run(Router())
+	assert.Equal(t, http.StatusCreated, res.Code)
+
+	co := gruff.ArgumentOpinion{}
+	err := TESTDB.Where("user_id = ?", u.ID).Where("argument_id = ?", a.ID).First(&co).Error
+	assert.Nil(t, err)
+	assert.Equal(t, 0.2394, co.Impact)
+}
+
+func TestSetScoreImpactUpdate(t *testing.T) {
+	setup()
+	defer teardown()
+	u := createTestUser()
+	r := New(tokenForTestUser(u))
+
+	c1 := createClaim()
+	c2 := createClaim()
+	TESTDB.Create(&c1)
+	TESTDB.Create(&c2)
+
+	a := gruff.Argument{TargetClaimID: gruff.NUUID(c1.ID), ClaimID: c2.ID, Title: "An arg"}
+	TESTDB.Create(&a)
+
+	co := gruff.ArgumentOpinion{
+		UserID:     u.ID,
+		ArgumentID: a.ID,
+		Impact:     0.8239,
+		Relevance:  0.3299,
+	}
+	TESTDB.Create(&co)
+
+	m := map[string]interface{}{
+		"score": 0.2394,
+	}
+
+	r.POST(fmt.Sprintf("/api/arguments/%s/impact", a.ID))
+	r.SetBody(m)
+	res, _ := r.Run(Router())
+	assert.Equal(t, http.StatusAccepted, res.Code)
+
+	co = gruff.ArgumentOpinion{}
+	err := TESTDB.Where("user_id = ?", u.ID).Where("argument_id = ?", a.ID).First(&co).Error
+	assert.Nil(t, err)
+	assert.Equal(t, 0.2394, co.Impact)
+	assert.Equal(t, 0.3299, co.Relevance)
+}
+
+func TestSetScoreRelevance(t *testing.T) {
+	setup()
+	defer teardown()
+	u := createTestUser()
+	r := New(tokenForTestUser(u))
+
+	c1 := createClaim()
+	c2 := createClaim()
+	TESTDB.Create(&c1)
+	TESTDB.Create(&c2)
+
+	a := gruff.Argument{TargetClaimID: gruff.NUUID(c1.ID), ClaimID: c2.ID, Title: "An arg"}
+	TESTDB.Create(&a)
+
+	m := map[string]interface{}{
+		"score": 0.2394,
+	}
+
+	r.POST(fmt.Sprintf("/api/arguments/%s/relevance", a.ID))
+	r.SetBody(m)
+	res, _ := r.Run(Router())
+	assert.Equal(t, http.StatusCreated, res.Code)
+
+	co := gruff.ArgumentOpinion{}
+	err := TESTDB.Where("user_id = ?", u.ID).Where("argument_id = ?", a.ID).First(&co).Error
+	assert.Nil(t, err)
+	assert.Equal(t, 0.2394, co.Relevance)
+}
+
+func TestSetScoreRelevanceUpdate(t *testing.T) {
+	setup()
+	defer teardown()
+	u := createTestUser()
+	r := New(tokenForTestUser(u))
+
+	c1 := createClaim()
+	c2 := createClaim()
+	TESTDB.Create(&c1)
+	TESTDB.Create(&c2)
+
+	a := gruff.Argument{TargetClaimID: gruff.NUUID(c1.ID), ClaimID: c2.ID, Title: "An arg"}
+	TESTDB.Create(&a)
+
+	co := gruff.ArgumentOpinion{
+		UserID:     u.ID,
+		ArgumentID: a.ID,
+		Relevance:  0.8239,
+		Impact:     0.3299,
+	}
+	TESTDB.Create(&co)
+
+	m := map[string]interface{}{
+		"score": 0.2394,
+	}
+
+	r.POST(fmt.Sprintf("/api/arguments/%s/relevance", a.ID))
+	r.SetBody(m)
+	res, _ := r.Run(Router())
+	assert.Equal(t, http.StatusAccepted, res.Code)
+
+	co = gruff.ArgumentOpinion{}
+	err := TESTDB.Where("user_id = ?", u.ID).Where("argument_id = ?", a.ID).First(&co).Error
+	assert.Nil(t, err)
+	assert.Equal(t, 0.2394, co.Relevance)
+	assert.Equal(t, 0.3299, co.Impact)
+}
+
 func createClaim() gruff.Claim {
 	c := gruff.Claim{
 		Title:       "Claim",

@@ -45,11 +45,10 @@ func SetUpRouter(test bool, db *gorm.DB) *echo.Echo {
 	private.DELETE("/arguments/:id", ctx.Delete)
 	private.PUT("/arguments/:id/move/:newId/type/:type", ctx.MoveArgument)
 
-	public.GET("/argument_opinions", ctx.List)
-	public.GET("/argument_opinions/:id", ctx.Get)
-	private.POST("/argument_opinions", ctx.Create)
-	private.PUT("/argument_opinions/:id", ctx.Update)
-	private.DELETE("/argument_opinions/:id", ctx.Delete)
+	private.POST("/arguments/:id/impact", ctx.SetScore)
+	private.PUT("/arguments/:id/impact", ctx.SetScore)
+	private.POST("/arguments/:id/relevance", ctx.SetScore)
+	private.PUT("/arguments/:id/relevance", ctx.SetScore)
 
 	public.GET("/contexts", ctx.List)
 	public.GET("/contexts/:id", ctx.Get)
@@ -63,8 +62,8 @@ func SetUpRouter(test bool, db *gorm.DB) *echo.Echo {
 	private.POST("/claims", ctx.Create)
 	private.PUT("/claims/:id", ctx.Update)
 	private.DELETE("/claims/:id", ctx.Delete)
-	private.POST("/claims/:id/truth", ctx.SetTruthScore)
-	private.PUT("/claims/:id/truth", ctx.SetTruthScore)
+	private.POST("/claims/:id/truth", ctx.SetScore)
+	private.PUT("/claims/:id/truth", ctx.SetScore)
 
 	public.GET("/links", ctx.List)
 	public.GET("/links/:id", ctx.Get)

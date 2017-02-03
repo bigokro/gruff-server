@@ -225,7 +225,7 @@ func TestGetClaim(t *testing.T) {
 	db = db.Preload("Tags")
 	db.Where("id = ?", d1.ID).First(&d1)
 
-	d1.ProTruth = []gruff.Argument{a3, a5}
+	d1.ProTruth = []gruff.Argument{a5, a3}
 	d1.ConTruth = []gruff.Argument{a4}
 
 	expectedResults, _ := json.Marshal(d1)

@@ -113,3 +113,36 @@ func TestArgumentValidateForUpdate(t *testing.T) {
 	a.Type = ARGUMENT_TYPE_CON_RELEVANCE
 	assert.Nil(t, a.ValidateForUpdate())
 }
+
+func TestOrderByBestArgument(t *testing.T) {
+	setupDB()
+	defer teardownDB()
+
+	c1 := Claim{Title: "Claim 1", Truth: 0.5}
+	c2 := Claim{Title: "Claim 2", Truth: 0.4}
+	c3 := Claim{Title: "Claim 3", Truth: 0.6}
+	c4 := Claim{Title: "Claim 4", Truth: 0.3}
+	c5 := Claim{Title: "Claim 5", Truth: 0.7}
+	TESTDB.Create(&c1)
+	TESTDB.Create(&c2)
+	TESTDB.Create(&c3)
+	TESTDB.Create(&c4)
+	TESTDB.Create(&c5)
+
+	a1 := Argument{Title: "Argument 1", TargetClaimID: NUUID(c1.ID), ClaimID: c2.ID, Impact: 0.1, Relevance: 0.1}
+	a2 := Argument{Title: "Argument 1", TargetClaimID: NUUID(c1.ID), ClaimID: c3.ID, Impact: 0.2, Relevance: 0.0}
+	a3 := Argument{Title: "Argument 1", TargetClaimID: NUUID(c1.ID), ClaimID: c4.ID, Impact: 0.6, Relevance: 1.0}
+	a4 := Argument{Title: "Argument 1", TargetClaimID: NUUID(c1.ID), ClaimID: c5.ID, Impact: 0.7, Relevance: 0.95}
+	TESTDB.Create(&a1)
+	TESTDB.Create(&a2)
+	TESTDB.Create(&a3)
+	TESTDB.Create(&a4)
+
+	args := []Argument{}
+	TESTDB.Preload("Claim").Scopes(OrderByBestArgument).Find(&args)
+	assert.Equal(t, 4, len(args))
+	assert.Equal(t, a4.ID, args[0].ID)
+	assert.Equal(t, a3.ID, args[1].ID)
+	assert.Equal(t, a1.ID, args[2].ID)
+	assert.Equal(t, a2.ID, args[3].ID)
+}

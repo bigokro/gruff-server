@@ -23,6 +23,10 @@ package gruff
  * - Series: Because of X, Y happened, which caused Z --> Not modeled in Gruff
  * - Convergent: Airline travel is becoming more unpleasant because of X, Y, Z, P, D, and Q --> Supported by standard Gruff structure
  * - Parallel: Same as convergent, except that any one argument is enough --> Supported by standard Gruff structure
+ *
+ * Topoi for Resolutions of Fact (for scoring Truth):
+ * - What are the criteria (of truth)?
+ * - Are the criteria satisfied?
  */
 type Claim struct {
 	Identifier

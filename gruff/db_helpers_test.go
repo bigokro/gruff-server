@@ -19,3 +19,11 @@ func setupDB() {
 func teardownDB() {
 	TESTDB = TESTDB.Rollback()
 }
+
+func startDBLog() {
+	TESTDB.LogMode(true)
+}
+
+func stopDBLog() {
+	TESTDB.LogMode(false)
+}

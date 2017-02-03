@@ -29,7 +29,8 @@ func (ctx *Context) GetClaim(c echo.Context) error {
 	db = db.Preload("Contexts")
 	db = db.Preload("Values")
 	db = db.Preload("Tags")
-	err = db.Where("id = ?", id).First(&claim).Error
+	db = db.Where("id = ?", id)
+	err = db.First(&claim).Error
 	if err != nil {
 		c.String(http.StatusNotFound, "NotFound")
 		return err
@@ -39,7 +40,9 @@ func (ctx *Context) GetClaim(c echo.Context) error {
 	db = ctx.Database
 	db = db.Preload("Claim")
 	db = db.Where("type = ?", gruff.ARGUMENT_TYPE_PRO_TRUTH)
-	err = db.Where("target_claim_id = ?", id).Find(&proArgs).Error
+	db = db.Where("target_claim_id = ?", id)
+	db = db.Scopes(gruff.OrderByBestArgument)
+	err = db.Find(&proArgs).Error
 	if err != nil {
 		c.String(http.StatusInternalServerError, "ServerError")
 		return err
@@ -50,7 +53,9 @@ func (ctx *Context) GetClaim(c echo.Context) error {
 	db = ctx.Database
 	db = db.Preload("Claim")
 	db = db.Where("type = ?", gruff.ARGUMENT_TYPE_CON_TRUTH)
-	err = db.Where("target_claim_id = ?", id).Find(&conArgs).Error
+	db = db.Where("target_claim_id = ?", id)
+	db = db.Scopes(gruff.OrderByBestArgument)
+	err = db.Find(&conArgs).Error
 	if err != nil {
 		c.String(http.StatusInternalServerError, "ServerError")
 		return err

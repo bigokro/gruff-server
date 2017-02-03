@@ -2,6 +2,7 @@ package gruff
 
 import (
 	"github.com/google/uuid"
+	"github.com/jinzhu/gorm"
 )
 
 const ARGUMENT_TYPE_PRO_TRUTH int = 1
@@ -45,6 +46,23 @@ const ARGUMENT_TYPE_CON_IMPACT int = 6
     Impact: 1.0 = This argument is definitely the most important argument for this side - no need to read any others; 0.5 = This is one more argument to consider; 0.01 = Probably not even worth including in the discussion
     Relevance: 1.0 = Completely germaine and on-topic; 0.5 = Circumstantial or somewhat relevant; 0.01 = Totally off-point, should be ignored
 
+ *
+ * Topoi for Resolutions of Definition (for scoring Relevance/Impact):
+ * - Is the interpretation relevant? (relevance)
+ * - Is the interpretation fair?
+ * - How should we choose among competing interpretations? (impact)
+ *
+ * Topoi for Resolutions of Value (for scoring Relevance/Impact):
+ * - Is the condition truly good or bad as alleged? (i.e. which values are impacted, and is it positive or negative?)
+ * - Has the value been properly applied? (relevance)
+ * - How should we choose among competing values? (impact)
+ *
+ * Topoi for Resolutions of Policy (this would look differently in our model - one Issue with multiple claims as solutions?):
+ * - Is there a problem? (could be represented by a "Do nothing" claim)
+ * - Where is the credit or blame due?
+ * - Will the proposal solve the problem?
+ * - On balance, will things be better off? (trade offs - need to measure each proposal against multiple values)
+ *
 */
 type Argument struct {
 	Identifier
@@ -130,4 +148,11 @@ func (a Argument) ValidateType() GruffError {
 		return NewBusinessError("Type: invalid;")
 	}
 	return nil
+}
+
+// Scopes
+
+func OrderByBestArgument(db *gorm.DB) *gorm.DB {
+	return db.Joins("LEFT JOIN claims c ON c.id = arguments.claim_id").
+		Order("(arguments.relevance * arguments.impact * c.truth) DESC")
 }

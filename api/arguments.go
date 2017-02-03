@@ -45,7 +45,9 @@ func (ctx *Context) GetArgument(c echo.Context) error {
 	db = ctx.Database
 	db = db.Preload("Claim")
 	db = db.Where("type = ?", gruff.ARGUMENT_TYPE_PRO_RELEVANCE)
-	err = db.Where("target_argument_id = ?", id).Find(&proRel).Error
+	db = db.Where("target_argument_id = ?", id)
+	db = db.Scopes(gruff.OrderByBestArgument)
+	err = db.Find(&proRel).Error
 	if err != nil {
 		c.String(http.StatusInternalServerError, "ServerError")
 		return err
@@ -58,7 +60,9 @@ func (ctx *Context) GetArgument(c echo.Context) error {
 	db = ctx.Database
 	db = db.Preload("Claim")
 	db = db.Where("type = ?", gruff.ARGUMENT_TYPE_CON_RELEVANCE)
-	err = db.Where("target_argument_id = ?", id).Find(&conRel).Error
+	db = db.Where("target_argument_id = ?", id)
+	db = db.Scopes(gruff.OrderByBestArgument)
+	err = db.Find(&conRel).Error
 	if err != nil {
 		c.String(http.StatusInternalServerError, "ServerError")
 		return err
@@ -71,7 +75,9 @@ func (ctx *Context) GetArgument(c echo.Context) error {
 	db = ctx.Database
 	db = db.Preload("Claim")
 	db = db.Where("type = ?", gruff.ARGUMENT_TYPE_PRO_IMPACT)
-	err = db.Where("target_argument_id = ?", id).Find(&proImpact).Error
+	db = db.Where("target_argument_id = ?", id)
+	db = db.Scopes(gruff.OrderByBestArgument)
+	err = db.Find(&proImpact).Error
 	if err != nil {
 		c.String(http.StatusInternalServerError, "ServerError")
 		return err
@@ -82,7 +88,9 @@ func (ctx *Context) GetArgument(c echo.Context) error {
 	db = ctx.Database
 	db = db.Preload("Claim")
 	db = db.Where("type = ?", gruff.ARGUMENT_TYPE_CON_IMPACT)
-	err = db.Where("target_argument_id = ?", id).Find(&conImpact).Error
+	db = db.Where("target_argument_id = ?", id)
+	db = db.Scopes(gruff.OrderByBestArgument)
+	err = db.Find(&conImpact).Error
 	if err != nil {
 		c.String(http.StatusInternalServerError, "ServerError")
 		return err

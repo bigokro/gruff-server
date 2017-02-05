@@ -150,6 +150,16 @@ func (a Argument) ValidateType() GruffError {
 	return nil
 }
 
+// Business methods
+
+func (a Argument) UpdateImpact(ctx ServerContext) {
+	ctx.Database.Exec("UPDATE arguments a SET impact = (SELECT AVG(impact) FROM argument_opinions WHERE argument_id = a.id) WHERE id = ?", a.ID)
+}
+
+func (a Argument) UpdateRelevance(ctx ServerContext) {
+	ctx.Database.Exec("UPDATE arguments a SET relevance = (SELECT AVG(relevance) FROM argument_opinions WHERE argument_id = a.id) WHERE id = ?", a.ID)
+}
+
 // Scopes
 
 func OrderByBestArgument(db *gorm.DB) *gorm.DB {

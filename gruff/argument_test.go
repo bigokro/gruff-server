@@ -146,3 +146,109 @@ func TestOrderByBestArgument(t *testing.T) {
 	assert.Equal(t, a1.ID, args[2].ID)
 	assert.Equal(t, a2.ID, args[3].ID)
 }
+
+func TestUpdateImpactUpdateRelevance(t *testing.T) {
+	setupDB()
+	defer teardownDB()
+
+	c1 := Claim{Title: "C1"}
+	c2 := Claim{Title: "C2"}
+	c3 := Claim{Title: "C3"}
+	TESTDB.Create(&c1)
+	TESTDB.Create(&c2)
+	TESTDB.Create(&c3)
+
+	a1 := Argument{Title: "A1", TargetClaimID: NUUID(c1.ID), ClaimID: c2.ID}
+	a2 := Argument{Title: "Heinz 57", TargetClaimID: NUUID(c1.ID), ClaimID: c3.ID}
+	TESTDB.Create(&a1)
+	TESTDB.Create(&a2)
+
+	a1.UpdateImpact(CTX)
+	a1.UpdateRelevance(CTX)
+	a2.UpdateImpact(CTX)
+	a2.UpdateRelevance(CTX)
+	TESTDB.First(&a1)
+	TESTDB.First(&a2)
+	assert.Equal(t, 0.0, a1.Impact)
+	assert.Equal(t, 0.0, a1.Relevance)
+	assert.Equal(t, 0.0, a2.Impact)
+	assert.Equal(t, 0.0, a2.Relevance)
+
+	ao1 := ArgumentOpinion{UserID: 1, ArgumentID: a1.ID, Impact: 0.5, Relevance: 0.1}
+	TESTDB.Create(&ao1)
+
+	a1.UpdateImpact(CTX)
+	a1.UpdateRelevance(CTX)
+	a2.UpdateImpact(CTX)
+	a2.UpdateRelevance(CTX)
+	TESTDB.First(&a1)
+	TESTDB.First(&a2)
+	assert.Equal(t, 0.5, a1.Impact)
+	assert.Equal(t, 0.1, a1.Relevance)
+	assert.Equal(t, 0.0, a2.Impact)
+	assert.Equal(t, 0.0, a2.Relevance)
+
+	ao2 := ArgumentOpinion{UserID: 2, ArgumentID: a2.ID, Impact: 0.9, Relevance: 0.9}
+	TESTDB.Create(&ao2)
+
+	a1.UpdateImpact(CTX)
+	a1.UpdateRelevance(CTX)
+	a2.UpdateImpact(CTX)
+	a2.UpdateRelevance(CTX)
+	TESTDB.First(&a1)
+	TESTDB.First(&a2)
+	assert.Equal(t, 0.5, a1.Impact)
+	assert.Equal(t, 0.1, a1.Relevance)
+	assert.Equal(t, 0.9, a2.Impact)
+	assert.Equal(t, 0.9, a2.Relevance)
+
+	ao3 := ArgumentOpinion{UserID: 3, ArgumentID: a1.ID, Impact: 0.7, Relevance: 0.5}
+	TESTDB.Create(&ao3)
+
+	a1.UpdateImpact(CTX)
+	a1.UpdateRelevance(CTX)
+	a2.UpdateImpact(CTX)
+	a2.UpdateRelevance(CTX)
+	TESTDB.First(&a1)
+	TESTDB.First(&a2)
+	assert.Equal(t, 0.6, a1.Impact)
+	assert.Equal(t, 0.3, a1.Relevance)
+	assert.Equal(t, 0.9, a2.Impact)
+	assert.Equal(t, 0.9, a2.Relevance)
+
+	ao4 := ArgumentOpinion{UserID: 4, ArgumentID: a1.ID, Impact: 0.3, Relevance: 0.6}
+	ao5 := ArgumentOpinion{UserID: 5, ArgumentID: a2.ID, Impact: 0.6, Relevance: 0.5}
+	ao6 := ArgumentOpinion{UserID: 6, ArgumentID: a2.ID, Impact: 0.2, Relevance: 0.3}
+	ao7 := ArgumentOpinion{UserID: 7, ArgumentID: a2.ID, Impact: 0.8, Relevance: 0.4}
+	ao8 := ArgumentOpinion{UserID: 8, ArgumentID: a2.ID, Impact: 0.8, Relevance: 0.4}
+	TESTDB.Create(&ao4)
+	TESTDB.Create(&ao5)
+	TESTDB.Create(&ao6)
+	TESTDB.Create(&ao7)
+	TESTDB.Create(&ao8)
+
+	a1.UpdateImpact(CTX)
+	a1.UpdateRelevance(CTX)
+	a2.UpdateImpact(CTX)
+	a2.UpdateRelevance(CTX)
+	TESTDB.First(&a1)
+	TESTDB.First(&a2)
+	assert.Equal(t, 0.5, a1.Impact)
+	assert.Equal(t, 0.4, a1.Relevance)
+	assert.Equal(t, 0.66, a2.Impact)
+	assert.Equal(t, 0.5, a2.Relevance)
+
+	ao7.Impact = 0.5
+	TESTDB.Save(&ao7)
+
+	a1.UpdateImpact(CTX)
+	a1.UpdateRelevance(CTX)
+	a2.UpdateImpact(CTX)
+	a2.UpdateRelevance(CTX)
+	TESTDB.First(&a1)
+	TESTDB.First(&a2)
+	assert.Equal(t, 0.5, a1.Impact)
+	assert.Equal(t, 0.4, a1.Relevance)
+	assert.Equal(t, 0.6, a2.Impact)
+	assert.Equal(t, 0.5, a2.Relevance)
+}

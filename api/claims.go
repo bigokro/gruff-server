@@ -140,6 +140,7 @@ func (ctx *Context) SetScore(c echo.Context) error {
 		score = val.(float64)
 	}
 
+	status := http.StatusCreated
 	db = ctx.Database
 	db = db.Where("user_id = ?", user.ID)
 	if claim {
@@ -151,14 +152,31 @@ func (ctx *Context) SetScore(c echo.Context) error {
 		setScore(item, scoreType, score)
 		db = ctx.Database
 		err = db.Create(item).Error
-		return c.JSON(http.StatusCreated, item)
+		if err != nil {
+			c.String(http.StatusInternalServerError, "ServerError")
+			return err
+		}
 	} else {
 		setScore(item, scoreType, score)
 		db = ctx.Database
 		err = db.Save(item).Error
-		return c.JSON(http.StatusAccepted, item)
+		if err != nil {
+			c.String(http.StatusInternalServerError, "ServerError")
+			return err
+		}
+		status = http.StatusAccepted
 	}
 
+	switch scoreType {
+	case "truth":
+		target.(*gruff.Claim).UpdateTruth(ctx.ServerContext())
+	case "impact":
+		target.(*gruff.Argument).UpdateImpact(ctx.ServerContext())
+	case "relevance":
+		target.(*gruff.Argument).UpdateRelevance(ctx.ServerContext())
+	}
+
+	return c.JSON(status, item)
 }
 
 func setScore(item interface{}, field string, score float64) {

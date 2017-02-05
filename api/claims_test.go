@@ -302,6 +302,9 @@ func TestSetTruthScore(t *testing.T) {
 	err := TESTDB.Where("user_id = ?", u.ID).Where("claim_id = ?", c1.ID).First(&co).Error
 	assert.Nil(t, err)
 	assert.Equal(t, 0.2394, co.Truth)
+
+	TESTDB.First(&c1)
+	assert.Equal(t, 0.2394, c1.Truth)
 }
 
 func TestSetTruthScoreUpdate(t *testing.T) {
@@ -322,6 +325,10 @@ func TestSetTruthScoreUpdate(t *testing.T) {
 	}
 	TESTDB.Create(&co)
 
+	c1.UpdateTruth(CTX.ServerContext())
+	TESTDB.First(&c1)
+	assert.Equal(t, 0.8239, c1.Truth)
+
 	m := map[string]interface{}{
 		"score": 0.2394,
 	}
@@ -335,6 +342,9 @@ func TestSetTruthScoreUpdate(t *testing.T) {
 	err := TESTDB.Where("user_id = ?", u.ID).Where("claim_id = ?", c1.ID).First(&co).Error
 	assert.Nil(t, err)
 	assert.Equal(t, 0.2394, co.Truth)
+
+	TESTDB.First(&c1)
+	assert.Equal(t, 0.2394, c1.Truth)
 }
 
 func TestSetScoreImpact(t *testing.T) {
@@ -364,6 +374,9 @@ func TestSetScoreImpact(t *testing.T) {
 	err := TESTDB.Where("user_id = ?", u.ID).Where("argument_id = ?", a.ID).First(&co).Error
 	assert.Nil(t, err)
 	assert.Equal(t, 0.2394, co.Impact)
+
+	TESTDB.First(&a)
+	assert.Equal(t, 0.2394, a.Impact)
 }
 
 func TestSetScoreImpactUpdate(t *testing.T) {
@@ -388,6 +401,9 @@ func TestSetScoreImpactUpdate(t *testing.T) {
 	}
 	TESTDB.Create(&co)
 
+	a.UpdateImpact(CTX.ServerContext())
+	a.UpdateRelevance(CTX.ServerContext())
+
 	m := map[string]interface{}{
 		"score": 0.2394,
 	}
@@ -402,6 +418,10 @@ func TestSetScoreImpactUpdate(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, 0.2394, co.Impact)
 	assert.Equal(t, 0.3299, co.Relevance)
+
+	TESTDB.First(&a)
+	assert.Equal(t, 0.2394, a.Impact)
+	assert.Equal(t, 0.3299, a.Relevance)
 }
 
 func TestSetScoreRelevance(t *testing.T) {
@@ -431,6 +451,9 @@ func TestSetScoreRelevance(t *testing.T) {
 	err := TESTDB.Where("user_id = ?", u.ID).Where("argument_id = ?", a.ID).First(&co).Error
 	assert.Nil(t, err)
 	assert.Equal(t, 0.2394, co.Relevance)
+
+	TESTDB.First(&a)
+	assert.Equal(t, 0.2394, a.Relevance)
 }
 
 func TestSetScoreRelevanceUpdate(t *testing.T) {
@@ -455,6 +478,9 @@ func TestSetScoreRelevanceUpdate(t *testing.T) {
 	}
 	TESTDB.Create(&co)
 
+	a.UpdateImpact(CTX.ServerContext())
+	a.UpdateRelevance(CTX.ServerContext())
+
 	m := map[string]interface{}{
 		"score": 0.2394,
 	}
@@ -469,6 +495,10 @@ func TestSetScoreRelevanceUpdate(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, 0.2394, co.Relevance)
 	assert.Equal(t, 0.3299, co.Impact)
+
+	TESTDB.First(&a)
+	assert.Equal(t, 0.2394, a.Relevance)
+	assert.Equal(t, 0.3299, a.Impact)
 }
 
 func createClaim() gruff.Claim {

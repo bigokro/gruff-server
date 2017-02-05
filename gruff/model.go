@@ -3,6 +3,7 @@ package gruff
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/jinzhu/gorm"
 	"reflect"
 	"time"
 )
@@ -74,4 +75,9 @@ func JsonToModel(jsonStr string, item interface{}) error {
 		}
 	}
 	return err
+}
+
+type ServerContext struct {
+	Database *gorm.DB
+	Test     bool
 }

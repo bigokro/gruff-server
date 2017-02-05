@@ -40,3 +40,7 @@ type Claim struct {
 	Values      []Value    `json:"values,omitempty"  gorm:"many2many:claim_values;"`
 	Tags        []Tag      `json:"tags,omitempty"  gorm:"many2many:claim_tags;"`
 }
+
+func (c Claim) UpdateTruth(ctx ServerContext) {
+	ctx.Database.Exec("UPDATE claims c SET truth = (SELECT AVG(truth) FROM claim_opinions WHERE claim_id = c.id) WHERE id = ?", c.ID)
+}

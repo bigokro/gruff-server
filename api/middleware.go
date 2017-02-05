@@ -100,3 +100,10 @@ func StringToType(typeName string) (t reflect.Type) {
 	}
 	return
 }
+
+func (ctx *Context) ServerContext() gruff.ServerContext {
+	return gruff.ServerContext{
+		Database: ctx.Database,
+		Test:     false,
+	}
+}

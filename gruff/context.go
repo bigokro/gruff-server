@@ -6,4 +6,5 @@ type Context struct {
 	Parent      *Context `json:"parent,omitempty"`
 	Title       string   `json:"title" sql:"not null" valid:"length(3|1000)"`
 	Description string   `json:"desc" valid:"length(3|4000)"`
+	Url         string   `json:"url" valid:"url"`
 }

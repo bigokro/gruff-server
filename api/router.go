@@ -56,6 +56,9 @@ func SetUpRouter(test bool, db *gorm.DB) *echo.Echo {
 	private.PUT("/contexts/:id", ctx.Update)
 	private.DELETE("/contexts/:id", ctx.Delete)
 
+	private.POST("/claims/:parentId/contexts/:id", ctx.AddAssociation)
+	private.DELETE("/claims/:parentId/contexts/:id", ctx.RemoveAssociation)
+
 	public.GET("/claims", ctx.List)
 	public.GET("/claims/top", ctx.ListTopClaims)
 	public.GET("/claims/:id", ctx.GetClaim)

@@ -104,10 +104,53 @@ func TestDeleteContexts(t *testing.T) {
 	assert.Equal(t, http.StatusOK, res.Code)
 }
 
+func TestAddContextToClaim(t *testing.T) {
+	setup()
+	defer teardown()
+	r := New(Token)
+
+	c1 := createContext()
+	TESTDB.Create(&c1)
+
+	cl1 := gruff.Claim{Title: "We should troll the trolls"}
+	TESTDB.Create(&cl1)
+
+	r.POST(fmt.Sprintf("/api/claims/%s/contexts/%d", cl1.ID, c1.ID))
+	res, _ := r.Run(Router())
+	assert.Equal(t, http.StatusCreated, res.Code)
+
+	TESTDB.Preload("Contexts").Where("id = ?", cl1.ID).First(&cl1)
+	assert.Equal(t, 1, len(cl1.Contexts))
+	assert.Equal(t, c1.ID, cl1.Contexts[0].ID)
+}
+
+func TestRemoveContextFromClaim(t *testing.T) {
+	setup()
+	defer teardown()
+	r := New(Token)
+
+	c1 := createContext()
+	TESTDB.Create(&c1)
+
+	cl1 := gruff.Claim{Title: "We should troll the trolls"}
+	TESTDB.Create(&cl1)
+
+	TESTDB.Model(&cl1).Association("Contexts").Append(&c1)
+
+	r.DELETE(fmt.Sprintf("/api/claims/%s/contexts/%d", cl1.ID, c1.ID))
+	res, _ := r.Run(Router())
+	assert.Equal(t, http.StatusOK, res.Code)
+
+	cl1.Contexts = []gruff.Context{}
+	TESTDB.Preload("Contexts").Where("id = ?", cl1.ID).First(&cl1)
+	assert.Equal(t, 0, len(cl1.Contexts))
+}
+
 func createContext() gruff.Context {
 	c := gruff.Context{
 		Title:       "contexts",
 		Description: "contexts",
+		Url:         "https://en.wikipedia.org/wiki/Peter_Christen_Asbj%C3%B8rnsen",
 	}
 
 	return c

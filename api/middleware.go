@@ -63,6 +63,19 @@ func (ctx *Context) DetermineType(next echo.HandlerFunc) echo.HandlerFunc {
 	}
 }
 
+func (ctx *Context) AssociationFieldNameFromPath(c echo.Context) string {
+	path := c.Path()
+	parts := strings.Split(path, "/")
+	associationPath := ""
+	for _, part := range parts {
+		if StringToType(part) == ctx.Type {
+			associationPath = part
+		}
+	}
+	associationName := SnakeToCamel(associationPath)
+	return associationName
+}
+
 func PathParts(path string) []string {
 	parts := strings.Split(strings.Trim(path, " /"), "/")
 	return parts

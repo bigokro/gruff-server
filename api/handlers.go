@@ -186,6 +186,58 @@ func (ctx *Context) Destroy(c echo.Context) error {
 	return c.JSON(http.StatusOK, item)
 }
 
+func (ctx *Context) AddAssociation(c echo.Context) error {
+	db := ctx.Database
+
+	parentId := c.Param("parentId")
+	id := c.Param("id")
+
+	parentItem := reflect.New(ctx.ParentType).Interface()
+	if err := db.Where("id = ?", parentId).First(parentItem).Error; err != nil {
+		c.String(http.StatusNotFound, "NotFound")
+		return err
+	}
+
+	item := reflect.New(ctx.Type).Interface()
+	if err := db.Where("id = ?", id).First(item).Error; err != nil {
+		c.String(http.StatusNotFound, "NotFound")
+		return err
+	}
+
+	associationName := ctx.AssociationFieldNameFromPath(c)
+	if err := db.Model(parentItem).Association(associationName).Append(item).Error; err != nil {
+		return gruff.NewServerError(err.Error())
+	}
+
+	return c.JSON(http.StatusCreated, item)
+}
+
+func (ctx *Context) RemoveAssociation(c echo.Context) error {
+	db := ctx.Database
+
+	parentId := c.Param("parentId")
+	id := c.Param("id")
+
+	parentItem := reflect.New(ctx.ParentType).Interface()
+	if err := db.Where("id = ?", parentId).First(parentItem).Error; err != nil {
+		c.String(http.StatusNotFound, "NotFound")
+		return err
+	}
+
+	item := reflect.New(ctx.Type).Interface()
+	if err := db.Where("id = ?", id).First(item).Error; err != nil {
+		c.String(http.StatusNotFound, "NotFound")
+		return err
+	}
+
+	associationName := ctx.AssociationFieldNameFromPath(c)
+	if err := db.Model(parentItem).Association(associationName).Delete(item).Error; err != nil {
+		return gruff.NewServerError(err.Error())
+	}
+
+	return c.JSON(http.StatusOK, item)
+}
+
 func BasicJoins(ctx *Context, c echo.Context, db *gorm.DB) *gorm.DB {
 	db = joinsFor(db, ctx)
 	return db

@@ -63,6 +63,14 @@ const ARGUMENT_TYPE_CON_IMPACT int = 6
  * - Will the proposal solve the problem?
  * - On balance, will things be better off? (trade offs - need to measure each proposal against multiple values)
  *
+
+ * Types of evidence (Pro/Con-Truth arguments) (not implemented in Gruff):
+ * - Examples
+ * - Statistics
+ * - Tangible objects
+ * - Testimony
+ * - Social consensus
+
 */
 type Argument struct {
 	Identifier

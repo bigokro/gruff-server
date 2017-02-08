@@ -101,6 +101,7 @@ func (ctx *Context) GetArgument(c echo.Context) error {
 }
 
 func (ctx *Context) CreateArgument(c echo.Context) error {
+	fmt.Println("got here")
 	arg := gruff.Argument{Claim: &gruff.Claim{}}
 	if err := c.Bind(&arg); err != nil {
 		return err

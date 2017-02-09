@@ -1,6 +1,7 @@
 package gruff
 
 import (
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
 )
@@ -70,6 +71,21 @@ const ARGUMENT_TYPE_CON_IMPACT int = 6
  * - Tangible objects
  * - Testimony
  * - Social consensus
+
+ * Fallacies: accusations of standard fallacies can be used as arguments against relevance, impact, or truth
+ * - Fallacies of Inference (con-impact? or con-relevance?):
+ *   - Hasty generalizations
+ *   - Unrepresentative samples
+ *   - Fallacy of composition (if one is, then all are)
+ *   - Fallacy of division (if most are, then this subgroup must be)
+ *   - Errors in inference from sign (correlation vs. causation)
+ *
+ * - Fallacies of Relevance:
+ *   - Ad Hominem
+ *   - Appeal to Unreasonable Emotion
+ * ... more
+
+ --> True definition of fallacy: an argument that subverts the purpose of resolving a disagreement
 
 */
 type Argument struct {
@@ -166,6 +182,59 @@ func (a Argument) UpdateImpact(ctx ServerContext) {
 
 func (a Argument) UpdateRelevance(ctx ServerContext) {
 	ctx.Database.Exec("UPDATE arguments a SET relevance = (SELECT AVG(relevance) FROM argument_opinions WHERE argument_id = a.id) WHERE id = ?", a.ID)
+}
+
+func (a *Argument) MoveTo(ctx ServerContext, newId uuid.UUID, t int) GruffError {
+	db := ctx.Database
+
+	switch t {
+	case ARGUMENT_TYPE_PRO_TRUTH, ARGUMENT_TYPE_CON_TRUTH:
+		newClaim := Claim{}
+		if err := db.Where("id = ?", newId).First(&newClaim).Error; err != nil {
+			return NewNotFoundError(err.Error())
+		}
+
+		newIdN := NullableUUID{newId}
+		a.TargetClaimID = &newIdN
+		a.TargetClaim = &newClaim
+		a.TargetArgumentID = nil
+
+	case ARGUMENT_TYPE_PRO_RELEVANCE, ARGUMENT_TYPE_CON_RELEVANCE, ARGUMENT_TYPE_PRO_IMPACT, ARGUMENT_TYPE_CON_IMPACT:
+		newArg := Argument{}
+		if err := db.Where("id = ?", newId).First(&newArg).Error; err != nil {
+			return NewNotFoundError(err.Error())
+		}
+
+		newIdN := NullableUUID{newId}
+		a.TargetArgumentID = &newIdN
+		a.TargetArgument = &newArg
+		a.TargetClaimID = nil
+
+	default:
+		return NewNotFoundError(fmt.Sprintf("Type unknown: %d", t))
+	}
+
+	if err := db.Set("gorm:save_associations", false).Save(a).Error; err != nil {
+		return NewServerError(err.Error())
+	}
+
+	ops := []ArgumentOpinion{}
+	if err := db.Where("argument_id = ?", a.ID).Find(&ops).Error; err != nil {
+		db.Rollback()
+		return NewServerError(err.Error())
+	}
+
+	for _, op := range ops {
+		// TODO: notify the user of the change - email/message old opinion and new link
+		fmt.Printf("Deleting argument opinion: %+v\n", op)
+	}
+
+	if err := db.Exec("DELETE FROM argument_opinions WHERE argument_id = ?", a.ID).Error; err != nil {
+		db.Rollback()
+		return NewServerError(err.Error())
+	}
+
+	return nil
 }
 
 // Scopes

@@ -101,7 +101,6 @@ func (ctx *Context) GetArgument(c echo.Context) error {
 }
 
 func (ctx *Context) CreateArgument(c echo.Context) error {
-	fmt.Println("got here")
 	arg := gruff.Argument{Claim: &gruff.Claim{}}
 	if err := c.Bind(&arg); err != nil {
 		return err
@@ -110,8 +109,9 @@ func (ctx *Context) CreateArgument(c echo.Context) error {
 	arg.CreatedByID = CurrentUserID(c)
 
 	if arg.ClaimID == uuid.Nil {
+		ctxIds := arg.Claim.ContextIDs
+
 		// First create a new Claim for this argument
-		// TODO: grab a title from a sub debate sent with the post data
 		claim := gruff.Claim{Title: arg.Title, Description: arg.Description}
 		claim.CreatedByID = arg.CreatedByID
 		if arg.Claim.Title != "" {
@@ -134,6 +134,10 @@ func (ctx *Context) CreateArgument(c echo.Context) error {
 		}
 		arg.ClaimID = claim.ID
 		arg.Claim = &claim
+
+		for _, ctxId := range ctxIds {
+			ctx.Database.Exec("INSERT INTO claim_contexts (claim_id, context_id) VALUES (?, ?)", claim.ID, ctxId)
+		}
 	} else {
 		arg.Claim = nil
 	}
@@ -143,8 +147,8 @@ func (ctx *Context) CreateArgument(c echo.Context) error {
 		return valerr
 	}
 
-	dberr := ctx.Database.Set("gorm:save_associations", false).Create(&arg).Error
-	if dberr != nil {
+	if dberr := ctx.Database.Set("gorm:save_associations", false).Create(&arg).Error; dberr != nil {
+		c.String(http.StatusInternalServerError, "ServerError")
 		return dberr
 	}
 
@@ -173,47 +177,14 @@ func (ctx *Context) MoveArgument(c echo.Context) error {
 	db := ctx.Database
 
 	arg := gruff.Argument{}
-	err = db.Where("id = ?", id).First(&arg).Error
-	if err != nil {
+	if err := db.Where("id = ?", id).First(&arg).Error; err != nil {
 		c.String(http.StatusNotFound, "NotFound")
 		return err
 	}
 
-	switch t {
-	case gruff.ARGUMENT_TYPE_PRO_TRUTH, gruff.ARGUMENT_TYPE_CON_TRUTH:
-		newClaim := gruff.Claim{}
-		err := db.Where("id = ?", newId).First(&newClaim).Error
-		if err != nil {
-			c.String(http.StatusNotFound, "NotFound")
-			return err
-		}
-
-		newIdN := gruff.NullableUUID{newId}
-		arg.TargetClaimID = &newIdN
-		arg.TargetClaim = &newClaim
-		arg.TargetArgumentID = nil
-
-	case gruff.ARGUMENT_TYPE_PRO_RELEVANCE, gruff.ARGUMENT_TYPE_CON_RELEVANCE, gruff.ARGUMENT_TYPE_PRO_IMPACT, gruff.ARGUMENT_TYPE_CON_IMPACT:
-		newArg := gruff.Argument{}
-		err := db.Where("id = ?", newId).First(&newArg).Error
-		if err != nil {
-			c.String(http.StatusNotFound, "NotFound")
-			return err
-		}
-
-		newIdN := gruff.NullableUUID{newId}
-		arg.TargetArgumentID = &newIdN
-		arg.TargetArgument = &newArg
-		arg.TargetClaimID = nil
-
-	default:
-		c.String(http.StatusNotFound, "NotFound")
+	if err := (&arg).MoveTo(ctx.ServerContext(), newId, t); err != nil {
+		c.String(http.StatusInternalServerError, "ServerError")
 		return err
-	}
-
-	db.Set("gorm:save_associations", false).Save(arg)
-	if db.Error != nil {
-		return db.Error
 	}
 
 	ctx.Payload["results"] = arg

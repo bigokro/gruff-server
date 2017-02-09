@@ -37,6 +37,7 @@ type Claim struct {
 	ConTruth    []Argument `json:"contruth,omitempty"`
 	Links       []Link     `json:"links,omitempty"`
 	Contexts    []Context  `json:"contexts,omitempty"  gorm:"many2many:claim_contexts;"`
+	ContextIDs  []uint64   `json:"contextIds,omitempty" gorm:"-"`
 	Values      []Value    `json:"values,omitempty"  gorm:"many2many:claim_values;"`
 	Tags        []Tag      `json:"tags,omitempty"  gorm:"many2many:claim_tags;"`
 }

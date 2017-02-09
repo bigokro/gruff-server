@@ -363,6 +363,63 @@ func TestCreateArgumentWithNewClaim(t *testing.T) {
 	assert.Equal(t, d1.Description, a1.Claim.Description)
 }
 
+func TestCreateArgumentWithNewClaimAndContexts(t *testing.T) {
+	setup()
+	defer teardown()
+
+	r := New(Token)
+
+	d1 := gruff.Claim{
+		Title:       "Claim",
+		Description: "This is a test Claim",
+	}
+	d2 := gruff.Claim{
+		Title:       "Another Claim",
+		Description: "This a target claim",
+		Truth:       1.000,
+	}
+	TESTDB.Create(&d2)
+
+	c1 := gruff.Context{Title: "Taylor Swift", Url: "http://en.wikipedia.com/Taylor_Swift"}
+	c2 := gruff.Context{Title: "Donald Trump", Url: "http://en.wikipedia.com/Donald_Trump"}
+	c3 := gruff.Context{Title: "Bozo the Clown", Url: "http://en.wikipedia.com/Bozo_the_Clown"}
+	TESTDB.Create(&c1)
+	TESTDB.Create(&c2)
+	TESTDB.Create(&c3)
+
+	d1.ContextIDs = []uint64{c2.ID, c3.ID, c1.ID}
+
+	a1 := gruff.Argument{
+		Claim:         &d1,
+		TargetClaimID: &gruff.NullableUUID{UUID: d2.ID},
+		Type:          gruff.ARGUMENT_TYPE_CON_TRUTH,
+		Title:         "This is an argument",
+		Description:   "This is an arguous description",
+	}
+
+	startDBLog()
+	defer stopDBLog()
+
+	r.POST("/api/arguments")
+	r.SetBody(a1)
+	res, _ := r.Run(Router())
+	assert.Equal(t, http.StatusCreated, res.Code)
+
+	TESTDB.Preload("Claim").Preload("Claim.Contexts").Where("title = ?", a1.Title).First(&a1)
+	assert.Equal(t, gruff.ARGUMENT_TYPE_CON_TRUTH, a1.Type)
+	assert.Equal(t, d2.ID, a1.TargetClaimID.UUID)
+
+	assert.Equal(t, d1.Title, a1.Claim.Title)
+	assert.Equal(t, d1.Description, a1.Claim.Description)
+	assert.Equal(t, 3, len(a1.Claim.Contexts))
+
+	a1.Claim.ContextIDs = []uint64{}
+	a1.Claim.Contexts = []gruff.Context{}
+	expectedResults, _ := json.Marshal(a1)
+	assert.Equal(t, string(expectedResults), res.Body.String())
+
+}
+
 func TestCreateArgumentWithNewClaimNoTitle(t *testing.T) {
 	setup()
 	defer teardown()

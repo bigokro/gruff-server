@@ -81,3 +81,11 @@ type ServerContext struct {
 	Database *gorm.DB
 	Test     bool
 }
+
+func UintPtr(val uint64) *uint64 {
+	return &val
+}
+
+func IntPtr(val int) *int {
+	return &val
+}

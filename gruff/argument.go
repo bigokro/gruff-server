@@ -187,6 +187,13 @@ func (a Argument) UpdateRelevance(ctx ServerContext) {
 func (a *Argument) MoveTo(ctx ServerContext, newId uuid.UUID, t int) GruffError {
 	db := ctx.Database
 
+	oldTargetID := a.TargetArgumentID
+	oldTargetType := OBJECT_TYPE_ARGUMENT
+	if oldTargetID == nil {
+		oldTargetID = a.TargetClaimID
+		oldTargetType = OBJECT_TYPE_CLAIM
+	}
+
 	switch t {
 	case ARGUMENT_TYPE_PRO_TRUTH, ARGUMENT_TYPE_CON_TRUTH:
 		newClaim := Claim{}
@@ -213,6 +220,7 @@ func (a *Argument) MoveTo(ctx ServerContext, newId uuid.UUID, t int) GruffError 
 	default:
 		return NewNotFoundError(fmt.Sprintf("Type unknown: %d", t))
 	}
+	a.Type = t
 
 	if err := db.Set("gorm:save_associations", false).Save(a).Error; err != nil {
 		return NewServerError(err.Error())
@@ -225,8 +233,8 @@ func (a *Argument) MoveTo(ctx ServerContext, newId uuid.UUID, t int) GruffError 
 	}
 
 	for _, op := range ops {
-		// TODO: notify the user of the change - email/message old opinion and new link
-		fmt.Printf("Deleting argument opinion: %+v\n", op)
+		// TODO: test
+		NotifyArgumentMoved(ctx, op.UserID, a.ID, oldTargetID.UUID, oldTargetType)
 	}
 
 	if err := db.Exec("DELETE FROM argument_opinions WHERE argument_id = ?", a.ID).Error; err != nil {

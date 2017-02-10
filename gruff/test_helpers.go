@@ -50,6 +50,7 @@ func runMigration(db *gorm.DB) {
 		&Tag{},
 		&Context{},
 		&Value{},
+		&Notification{},
 	}
 
 	for _, value := range values {

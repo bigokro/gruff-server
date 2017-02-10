@@ -252,3 +252,119 @@ func TestUpdateImpactUpdateRelevance(t *testing.T) {
 	assert.Equal(t, 0.6, a2.Impact)
 	assert.Equal(t, 0.5, a2.Relevance)
 }
+
+func TestArgumentMoveTo(t *testing.T) {
+	setupDB()
+	defer teardownDB()
+
+	c1 := Claim{Title: "Claim 1", Truth: 0.5}
+	c2 := Claim{Title: "Claim 2", Truth: 0.4}
+	c3 := Claim{Title: "Claim 3", Truth: 0.6}
+	c4 := Claim{Title: "Claim 4", Truth: 0.3}
+	c5 := Claim{Title: "Claim 5", Truth: 0.7}
+	TESTDB.Create(&c1)
+	TESTDB.Create(&c2)
+	TESTDB.Create(&c3)
+	TESTDB.Create(&c4)
+	TESTDB.Create(&c5)
+
+	a1 := Argument{Title: "Argument 1", TargetClaimID: NUUID(c1.ID), ClaimID: c2.ID, Impact: 0.1, Relevance: 0.1}
+	a2 := Argument{Title: "Argument 1", TargetClaimID: NUUID(c1.ID), ClaimID: c3.ID, Impact: 0.2, Relevance: 0.0}
+	a3 := Argument{Title: "Argument 1", TargetClaimID: NUUID(c1.ID), ClaimID: c4.ID, Impact: 0.6, Relevance: 1.0}
+	a4 := Argument{Title: "Argument 1", TargetClaimID: NUUID(c1.ID), ClaimID: c5.ID, Impact: 0.7, Relevance: 0.95}
+	TESTDB.Create(&a1)
+	TESTDB.Create(&a2)
+	TESTDB.Create(&a3)
+	TESTDB.Create(&a4)
+
+	u1 := User{Name: "User 1", Username: "user1", Email: "email1@gruff.org"}
+	u2 := User{Name: "User 2", Username: "user2", Email: "email2@gruff.org"}
+	u3 := User{Name: "User 3", Username: "user3", Email: "email3@gruff.org"}
+	u4 := User{Name: "User 4", Username: "user4", Email: "email4@gruff.org"}
+	TESTDB.Create(&u1)
+	TESTDB.Create(&u2)
+	TESTDB.Create(&u3)
+	TESTDB.Create(&u4)
+
+	co11 := ClaimOpinion{UserID: u1.ID, ClaimID: c1.ID, Truth: 0.2398}
+	co12 := ClaimOpinion{UserID: u2.ID, ClaimID: c1.ID, Truth: 0.3290}
+	co14 := ClaimOpinion{UserID: u4.ID, ClaimID: c1.ID, Truth: 0.0290}
+	co21 := ClaimOpinion{UserID: u1.ID, ClaimID: c2.ID, Truth: 0.389}
+	co32 := ClaimOpinion{UserID: u2.ID, ClaimID: c3.ID, Truth: 0.34985}
+	co33 := ClaimOpinion{UserID: u3.ID, ClaimID: c3.ID, Truth: 0.5487}
+	co44 := ClaimOpinion{UserID: u4.ID, ClaimID: c4.ID, Truth: 0.4839}
+	TESTDB.Create(&co11)
+	TESTDB.Create(&co12)
+	TESTDB.Create(&co14)
+	TESTDB.Create(&co21)
+	TESTDB.Create(&co32)
+	TESTDB.Create(&co33)
+	TESTDB.Create(&co44)
+
+	ao13 := ArgumentOpinion{UserID: u3.ID, ArgumentID: a1.ID, Relevance: 0.2398, Impact: 0.23984}
+	ao14 := ArgumentOpinion{UserID: u4.ID, ArgumentID: a1.ID, Relevance: 0.324, Impact: 0.923}
+	ao21 := ArgumentOpinion{UserID: u1.ID, ArgumentID: a2.ID, Relevance: 0.399, Impact: 0.23984}
+	ao23 := ArgumentOpinion{UserID: u3.ID, ArgumentID: a2.ID, Relevance: 0.322, Impact: 0.9832}
+	ao32 := ArgumentOpinion{UserID: u2.ID, ArgumentID: a3.ID, Relevance: 0.483, Impact: 0.4839}
+	ao42 := ArgumentOpinion{UserID: u2.ID, ArgumentID: a4.ID, Relevance: 0.9843, Impact: 0.2983}
+	ao44 := ArgumentOpinion{UserID: u4.ID, ArgumentID: a4.ID, Relevance: 0.298, Impact: 0.89384}
+	TESTDB.Create(&ao13)
+	TESTDB.Create(&ao14)
+	TESTDB.Create(&ao21)
+	TESTDB.Create(&ao23)
+	TESTDB.Create(&ao32)
+	TESTDB.Create(&ao42)
+	TESTDB.Create(&ao44)
+
+	err := a2.MoveTo(CTX, a1.ID, ARGUMENT_TYPE_PRO_IMPACT)
+
+	assert.Nil(t, err)
+	cos := []ClaimOpinion{}
+	TESTDB.Find(&cos)
+	assert.Equal(t, 7, len(cos))
+	aos := []ArgumentOpinion{}
+	TESTDB.Find(&aos)
+	assert.Equal(t, 5, len(aos))
+	TESTDB.Where("id = ?", a2.ID).First(&a2)
+	assert.Nil(t, a2.TargetClaimID)
+	assert.Equal(t, a1.ID, a2.TargetArgumentID.UUID)
+	assert.Equal(t, ARGUMENT_TYPE_PRO_IMPACT, a2.Type)
+	ns := []Notification{}
+	TESTDB.Order("user_id ASC").Find(&ns)
+	assert.Equal(t, 2, len(ns))
+	assert.Equal(t, u1.ID, ns[0].UserID)
+	assert.Equal(t, NOTIFICATION_TYPE_MOVED, ns[0].Type)
+	assert.Equal(t, a2.ID, ns[0].ItemID.UUID)
+	assert.Equal(t, OBJECT_TYPE_ARGUMENT, *ns[0].ItemType)
+	assert.Equal(t, c1.ID, ns[0].OldID.UUID)
+	assert.Equal(t, OBJECT_TYPE_CLAIM, *ns[0].OldType)
+	assert.Equal(t, u3.ID, ns[1].UserID)
+	assert.Equal(t, NOTIFICATION_TYPE_MOVED, ns[1].Type)
+	assert.Equal(t, a2.ID, ns[1].ItemID.UUID)
+	assert.Equal(t, OBJECT_TYPE_ARGUMENT, *ns[1].ItemType)
+	assert.Equal(t, c1.ID, ns[1].OldID.UUID)
+	assert.Equal(t, OBJECT_TYPE_CLAIM, *ns[1].OldType)
+
+	err = a3.MoveTo(CTX, c2.ID, ARGUMENT_TYPE_CON_TRUTH)
+
+	assert.Nil(t, err)
+	cos = []ClaimOpinion{}
+	TESTDB.Find(&cos)
+	assert.Equal(t, 7, len(cos))
+	aos = []ArgumentOpinion{}
+	TESTDB.Find(&aos)
+	assert.Equal(t, 4, len(aos))
+	TESTDB.Where("id = ?", a3.ID).First(&a3)
+	assert.Nil(t, a3.TargetArgumentID)
+	assert.Equal(t, c2.ID, a3.TargetClaimID.UUID)
+	assert.Equal(t, ARGUMENT_TYPE_CON_TRUTH, a3.Type)
+	ns = []Notification{}
+	TESTDB.Order("id ASC").Find(&ns)
+	assert.Equal(t, 3, len(ns))
+	assert.Equal(t, u2.ID, ns[2].UserID)
+	assert.Equal(t, NOTIFICATION_TYPE_MOVED, ns[2].Type)
+	assert.Equal(t, a3.ID, ns[2].ItemID.UUID)
+	assert.Equal(t, OBJECT_TYPE_ARGUMENT, *ns[2].ItemType)
+	assert.Equal(t, c1.ID, ns[2].OldID.UUID)
+	assert.Equal(t, OBJECT_TYPE_CLAIM, *ns[2].OldType)
+}

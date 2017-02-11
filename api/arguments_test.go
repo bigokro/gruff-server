@@ -10,6 +10,16 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func createArgument() gruff.Argument {
+	a := gruff.Argument{
+		Title:       "arguments",
+		Description: "arguments",
+		Type:        gruff.ARGUMENT_TYPE_PRO_TRUTH,
+	}
+
+	return a
+}
+
 func TestListArguments(t *testing.T) {
 	setup()
 	defer teardown()
@@ -583,14 +593,4 @@ func TestDeleteArgument(t *testing.T) {
 	r.DELETE(fmt.Sprintf("/api/arguments/%s", a1.ID))
 	res, _ := r.Run(Router())
 	assert.Equal(t, http.StatusOK, res.Code)
-}
-
-func createArgument() gruff.Argument {
-	a := gruff.Argument{
-		Title:       "arguments",
-		Description: "arguments",
-		Type:        gruff.ARGUMENT_TYPE_PRO_TRUTH,
-	}
-
-	return a
 }

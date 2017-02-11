@@ -32,7 +32,6 @@ func SetCreatedByID(item interface{}, id uint64) error {
 }
 
 func (i *Identifier) GenerateUUID() uuid.UUID {
-	//i.ID = uuid.NewV4()
 	i.ID = uuid.New()
 	return i.ID
 }
@@ -98,4 +97,8 @@ func (u *NullableUUID) UnmarshalText(data []byte) error {
 
 func NUUID(id uuid.UUID) *NullableUUID {
 	return &NullableUUID{UUID: id}
+}
+
+func NewNUUID() *NullableUUID {
+	return NUUID(uuid.New())
 }

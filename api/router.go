@@ -86,5 +86,9 @@ func SetUpRouter(test bool, db *gorm.DB) *echo.Echo {
 	private.PUT("/values/:id", ctx.Update)
 	private.DELETE("/values/:id", ctx.Delete)
 
+	private.GET("/notifications", ctx.ListNotifications)
+	private.POST("/notifications/:id", ctx.MarkNotificationViewed)
+	private.PUT("/notifications/:id", ctx.MarkNotificationViewed)
+
 	return root
 }

@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"github.com/bigokro/gruff-server/gruff"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
@@ -84,8 +83,6 @@ func TokenForUser(user gruff.User) (string, error) {
 			ExpiresAt: time.Now().Add(time.Hour * 72).Unix(),
 		},
 	}
-
-	fmt.Println("Claims:", claims)
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 

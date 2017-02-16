@@ -33,6 +33,7 @@ type Claim struct {
 	Title       string     `json:"title" sql:"not null" valid:"length(3|1000)"`
 	Description string     `json:"desc" valid:"length(3|4000)"`
 	Truth       float64    `json:"truth"`
+	TruthRU     float64    `json:"truthRU"` // Average score rolled up from argument totals
 	ProTruth    []Argument `json:"protruth,omitempty"`
 	ConTruth    []Argument `json:"contruth,omitempty"`
 	Links       []Link     `json:"links,omitempty"`
@@ -44,4 +45,82 @@ type Claim struct {
 
 func (c Claim) UpdateTruth(ctx ServerContext) {
 	ctx.Database.Exec("UPDATE claims c SET truth = (SELECT AVG(truth) FROM claim_opinions WHERE claim_id = c.id) WHERE id = ?", c.ID)
+
+	// TODO: test
+	if c.TruthRU == 0.0 {
+		// There's no roll up score yet, so the truth score itself is affecting related roll ups
+		c.UpdateAncestorRUs(ctx)
+	}
+}
+
+func (c *Claim) UpdateTruthRU(ctx ServerContext) {
+	// TODO: do it all in SQL?
+	// TODO: should updates be recursive? (first, calculate sub-argument RUs)
+	//       or, should it trigger an update of anyone that references it?
+	proArgs, conArgs := c.Arguments(ctx)
+
+	if len(proArgs) > 0 || len(conArgs) > 0 {
+		proScore := 0.0
+		for _, arg := range proArgs {
+			remainder := 1.0 - proScore
+			score := arg.ScoreRU(ctx)
+			addon := remainder * score
+			proScore += addon
+		}
+
+		conScore := 0.0
+		for _, arg := range conArgs {
+			remainder := 1.0 - conScore
+			score := arg.ScoreRU(ctx)
+			addon := remainder * score
+			conScore += addon
+		}
+
+		netScore := proScore - conScore
+		netScore = 0.5 + 0.5*netScore
+
+		c.TruthRU = netScore
+	} else {
+		c.TruthRU = 0.0
+	}
+
+	ctx.Database.Set("gorm:save_associations", false).Save(c)
+
+	c.UpdateAncestorRUs(ctx)
+}
+
+func (c Claim) UpdateAncestorRUs(ctx ServerContext) {
+	args := []Argument{}
+	ctx.Database.Where("claim_id = ?", c.ID).Find(&args)
+	for _, arg := range args {
+		// TODO: instead, add to list of things to be updated in bg
+		// TODO: what about cycles??
+		// TODO: test
+		arg.UpdateStrengthRU(ctx)
+	}
+}
+
+func (c Claim) Arguments(ctx ServerContext) (proArgs []Argument, conArgs []Argument) {
+	proArgs = c.ProTruth
+	conArgs = c.ConTruth
+
+	if len(proArgs) == 0 {
+		ctx.Database.
+			Preload("Claim").
+			Scopes(OrderByBestArgument).
+			Where("type = ?", ARGUMENT_TYPE_PRO_TRUTH).
+			Where("target_claim_id = ?", c.ID).
+			Find(&proArgs)
+	}
+
+	if len(conArgs) == 0 {
+		ctx.Database.
+			Preload("Claim").
+			Scopes(OrderByBestArgument).
+			Where("type = ?", ARGUMENT_TYPE_CON_TRUTH).
+			Where("target_claim_id = ?", c.ID).
+			Find(&conArgs)
+	}
+
+	return
 }

@@ -8,10 +8,8 @@ import (
 
 const ARGUMENT_TYPE_PRO_TRUTH int = 1
 const ARGUMENT_TYPE_CON_TRUTH int = 2
-const ARGUMENT_TYPE_PRO_RELEVANCE int = 3
-const ARGUMENT_TYPE_CON_RELEVANCE int = 4
-const ARGUMENT_TYPE_PRO_IMPACT int = 5
-const ARGUMENT_TYPE_CON_IMPACT int = 6
+const ARGUMENT_TYPE_PRO_STRENGTH int = 3
+const ARGUMENT_TYPE_CON_STRENGTH int = 4
 
 /*
   An Argument connects a Claim to another Claim or Argument
@@ -99,12 +97,10 @@ type Argument struct {
 	Title            string        `json:"title" sql:"not null" valid:"length(3|1000),required"`
 	Description      string        `json:"desc" valid:"length(3|4000)"`
 	Type             int           `json:"type" sql:"not null"`
-	Relevance        float64       `json:"relevance"`
-	Impact           float64       `json:"impact"`
-	ProRelevance     []Argument    `json:"prorelev,omitempty"`
-	ConRelevance     []Argument    `json:"conrelev,omitempty"`
-	ProImpact        []Argument    `json:"proimpact,omitempty"`
-	ConImpact        []Argument    `json:"conimpact,omitempty"`
+	Strength         float64       `json:"strength"`
+	StrengthRU       float64       `json:"strengthRU"`
+	ProStrength      []Argument    `json:"prostr,omitempty"`
+	ConStrength      []Argument    `json:"constr,omitempty"`
 }
 
 func (a Argument) ValidateForCreate() GruffError {
@@ -161,12 +157,10 @@ func (a Argument) ValidateType() GruffError {
 		if a.TargetClaimID == nil || a.TargetClaimID.UUID == uuid.Nil {
 			return NewBusinessError("A pro or con truth argument must refer to a target claim")
 		}
-	case ARGUMENT_TYPE_PRO_RELEVANCE,
-		ARGUMENT_TYPE_CON_RELEVANCE,
-		ARGUMENT_TYPE_PRO_IMPACT,
-		ARGUMENT_TYPE_CON_IMPACT:
+	case ARGUMENT_TYPE_PRO_STRENGTH,
+		ARGUMENT_TYPE_CON_STRENGTH:
 		if a.TargetArgumentID == nil || a.TargetArgumentID.UUID == uuid.Nil {
-			return NewBusinessError("An impact or relevance argument must refer to a target argument")
+			return NewBusinessError("An argument for or against argument strength must refer to a target argument")
 		}
 	default:
 		return NewBusinessError("Type: invalid;")
@@ -176,17 +170,77 @@ func (a Argument) ValidateType() GruffError {
 
 // Business methods
 
-func (a Argument) UpdateImpact(ctx ServerContext) {
-	ctx.Database.Exec("UPDATE arguments a SET impact = (SELECT AVG(impact) FROM argument_opinions WHERE argument_id = a.id) WHERE id = ?", a.ID)
+func (a Argument) UpdateStrength(ctx ServerContext) {
+	ctx.Database.Exec("UPDATE arguments a SET strength = (SELECT AVG(strength) FROM argument_opinions WHERE argument_id = a.id) WHERE id = ?", a.ID)
+
+	// TODO: test
+	if a.StrengthRU == 0.0 {
+		// There's no roll up score yet, so the strength score itself is affecting related roll ups
+		a.UpdateAncestorRUs(ctx)
+	}
 }
 
-func (a Argument) UpdateRelevance(ctx ServerContext) {
-	ctx.Database.Exec("UPDATE arguments a SET relevance = (SELECT AVG(relevance) FROM argument_opinions WHERE argument_id = a.id) WHERE id = ?", a.ID)
+func (a *Argument) UpdateStrengthRU(ctx ServerContext) {
+	// TODO: do it all in SQL?
+	proArgs, conArgs := a.Arguments(ctx)
+
+	if len(proArgs) > 0 || len(conArgs) > 0 {
+		proScore := 0.0
+		for _, arg := range proArgs {
+			remainder := 1.0 - proScore
+			score := arg.ScoreRU(ctx)
+			addon := remainder * score
+			proScore += addon
+		}
+
+		conScore := 0.0
+		for _, arg := range conArgs {
+			remainder := 1.0 - conScore
+			score := arg.ScoreRU(ctx)
+			addon := remainder * score
+			conScore += addon
+		}
+
+		netScore := proScore - conScore
+		netScore = 0.5 + 0.5*netScore
+
+		a.StrengthRU = netScore
+	} else {
+		a.StrengthRU = 0.0
+	}
+
+	ctx.Database.Set("gorm:save_associations", false).Save(a)
+
+	a.UpdateAncestorRUs(ctx)
+}
+
+func (a Argument) UpdateAncestorRUs(ctx ServerContext) {
+	if a.TargetClaimID != nil {
+		claim := a.TargetClaim
+		if claim == nil {
+			claim = &Claim{}
+			if err := ctx.Database.Where("id = ?", a.TargetClaimID).First(claim).Error; err != nil {
+				return
+			}
+		}
+		claim.UpdateTruthRU(ctx)
+	} else {
+		arg := a.TargetArgument
+		if arg == nil {
+			arg = &Argument{}
+			if err := ctx.Database.Where("id = ?", a.TargetArgumentID).First(arg).Error; err != nil {
+				fmt.Println("Error loading argument:", err.Error())
+				return
+			}
+		}
+		arg.UpdateStrengthRU(ctx)
+	}
 }
 
 func (a *Argument) MoveTo(ctx ServerContext, newId uuid.UUID, t int) GruffError {
 	db := ctx.Database
 
+	oldArg := Argument{TargetClaimID: a.TargetClaimID, TargetArgumentID: a.TargetArgumentID, Type: a.Type}
 	oldTargetID := a.TargetArgumentID
 	oldTargetType := OBJECT_TYPE_ARGUMENT
 	if oldTargetID == nil {
@@ -206,7 +260,7 @@ func (a *Argument) MoveTo(ctx ServerContext, newId uuid.UUID, t int) GruffError 
 		a.TargetClaim = &newClaim
 		a.TargetArgumentID = nil
 
-	case ARGUMENT_TYPE_PRO_RELEVANCE, ARGUMENT_TYPE_CON_RELEVANCE, ARGUMENT_TYPE_PRO_IMPACT, ARGUMENT_TYPE_CON_IMPACT:
+	case ARGUMENT_TYPE_PRO_STRENGTH, ARGUMENT_TYPE_CON_STRENGTH:
 		newArg := Argument{}
 		if err := db.Where("id = ?", newId).First(&newArg).Error; err != nil {
 			return NewNotFoundError(err.Error())
@@ -226,6 +280,9 @@ func (a *Argument) MoveTo(ctx ServerContext, newId uuid.UUID, t int) GruffError 
 		return NewServerError(err.Error())
 	}
 
+	// TODO: Goroutine
+
+	// Notify argument voters of move so they can vote again
 	ops := []ArgumentOpinion{}
 	if err := db.Where("argument_id = ?", a.ID).Find(&ops).Error; err != nil {
 		db.Rollback()
@@ -233,21 +290,101 @@ func (a *Argument) MoveTo(ctx ServerContext, newId uuid.UUID, t int) GruffError 
 	}
 
 	for _, op := range ops {
-		// TODO: test
 		NotifyArgumentMoved(ctx, op.UserID, a.ID, oldTargetID.UUID, oldTargetType)
 	}
 
+	// Notify sub argument voters of move so they can double-check their vote
+	uids := []uint64{}
+	rows, dberr := db.Model(ArgumentOpinion{}).
+		Select("DISTINCT argument_opinions.user_id").
+		Where("argument_id IN (SELECT id FROM arguments WHERE target_argument_id = ?)", a.ID).
+		Rows()
+	defer rows.Close()
+
+	if dberr == nil {
+		for rows.Next() {
+			var uid uint64
+			err := rows.Scan(&uid)
+			if err == nil {
+				uids = append(uids, uid)
+			}
+		}
+	}
+
+	for _, uid := range uids {
+		NotifyParentArgumentMoved(ctx, uid, a.ID, oldTargetID.UUID, oldTargetType)
+	}
+
+	// Clear opinions on the moved argument
 	if err := db.Exec("DELETE FROM argument_opinions WHERE argument_id = ?", a.ID).Error; err != nil {
 		db.Rollback()
 		return NewServerError(err.Error())
 	}
 
+	a.UpdateAncestorRUs(ctx)
+	oldArg.UpdateAncestorRUs(ctx)
+
 	return nil
+}
+
+func (a Argument) Score(ctx ServerContext) float64 {
+	c := a.Claim
+	if c == nil {
+		c = &Claim{}
+		ctx.Database.Where("id = ?", a.ClaimID).First(c)
+	}
+
+	return a.Strength * c.Truth
+}
+
+func (a Argument) ScoreRU(ctx ServerContext) float64 {
+	c := a.Claim
+	if c == nil {
+		c = &Claim{}
+		ctx.Database.Where("id = ?", a.ClaimID).First(c)
+	}
+
+	truth := c.TruthRU
+	if truth == 0.0 {
+		truth = c.Truth
+	}
+
+	strength := a.StrengthRU
+	if strength == 0.0 {
+		strength = a.Strength
+	}
+
+	return strength * truth
+}
+
+func (a Argument) Arguments(ctx ServerContext) (proArgs []Argument, conArgs []Argument) {
+	proArgs = a.ProStrength
+	conArgs = a.ConStrength
+
+	if len(proArgs) == 0 {
+		ctx.Database.
+			Preload("Claim").
+			Scopes(OrderByBestArgument).
+			Where("type = ?", ARGUMENT_TYPE_PRO_STRENGTH).
+			Where("target_argument_id = ?", a.ID).
+			Find(&proArgs)
+	}
+
+	if len(conArgs) == 0 {
+		ctx.Database.
+			Preload("Claim").
+			Scopes(OrderByBestArgument).
+			Where("type = ?", ARGUMENT_TYPE_CON_STRENGTH).
+			Where("target_argument_id = ?", a.ID).
+			Find(&conArgs)
+	}
+
+	return
 }
 
 // Scopes
 
 func OrderByBestArgument(db *gorm.DB) *gorm.DB {
 	return db.Joins("LEFT JOIN claims c ON c.id = arguments.claim_id").
-		Order("(arguments.relevance * arguments.impact * c.truth) DESC")
+		Order("(arguments.strength * c.truth) DESC")
 }

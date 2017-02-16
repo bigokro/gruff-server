@@ -110,11 +110,7 @@ func (ctx *Context) SetScore(c echo.Context) error {
 		claim = true
 		target = &gruff.Claim{}
 		item = &gruff.ClaimOpinion{UserID: user.ID, ClaimID: id}
-	case "impact":
-		claim = false
-		target = &gruff.Argument{}
-		item = &gruff.ArgumentOpinion{UserID: user.ID, ArgumentID: id}
-	case "relevance":
+	case "strength":
 		claim = false
 		target = &gruff.Argument{}
 		item = &gruff.ArgumentOpinion{UserID: user.ID, ArgumentID: id}
@@ -170,10 +166,8 @@ func (ctx *Context) SetScore(c echo.Context) error {
 	switch scoreType {
 	case "truth":
 		target.(*gruff.Claim).UpdateTruth(ctx.ServerContext())
-	case "impact":
-		target.(*gruff.Argument).UpdateImpact(ctx.ServerContext())
-	case "relevance":
-		target.(*gruff.Argument).UpdateRelevance(ctx.ServerContext())
+	case "strength":
+		target.(*gruff.Argument).UpdateStrength(ctx.ServerContext())
 	}
 
 	return c.JSON(status, item)

@@ -2,13 +2,15 @@ package gruff
 
 import (
 	"github.com/google/uuid"
+	"github.com/jinzhu/gorm"
 )
 
 const OBJECT_TYPE_CLAIM int = 1
 const OBJECT_TYPE_ARGUMENT int = 2
 
 const NOTIFICATION_TYPE_MOVED int = 1
-const NOTIFICATION_TYPE_NEW_ARGUMENT int = 2
+const NOTIFICATION_TYPE_PARENT_MOVED int = 2
+const NOTIFICATION_TYPE_NEW_ARGUMENT int = 3
 
 type Notification struct {
 	Model
@@ -39,6 +41,21 @@ func NotifyArgumentMoved(ctx ServerContext, userId uint64, argId uuid.UUID, oldT
 	return nil
 }
 
+func NotifyParentArgumentMoved(ctx ServerContext, userId uint64, parentArgId uuid.UUID, oldTargetId uuid.UUID, oldTargetType int) GruffError {
+	n := Notification{
+		UserID:   userId,
+		Type:     NOTIFICATION_TYPE_PARENT_MOVED,
+		ItemID:   NUUID(parentArgId),
+		ItemType: IntPtr(OBJECT_TYPE_ARGUMENT),
+		OldID:    NUUID(oldTargetId),
+		OldType:  IntPtr(oldTargetType),
+	}
+	if err := ctx.Database.Create(&n).Error; err != nil {
+		return NewServerError(err.Error())
+	}
+	return nil
+}
+
 func NotifyNewArgument(ctx ServerContext, userId uint64, item interface{}, newArg Argument) GruffError {
 	n := Notification{
 		UserID:  userId,
@@ -57,4 +74,16 @@ func NotifyNewArgument(ctx ServerContext, userId uint64, item interface{}, newAr
 		return NewServerError(err.Error())
 	}
 	return nil
+}
+
+// Scopes
+
+func FindArgumentMovedNotifications(db *gorm.DB) *gorm.DB {
+	return db.Where("type = ?", NOTIFICATION_TYPE_MOVED).
+		Where("item_type = ?", OBJECT_TYPE_ARGUMENT)
+}
+
+func FindParentArgumentMovedNotifications(db *gorm.DB) *gorm.DB {
+	return db.Where("type = ?", NOTIFICATION_TYPE_PARENT_MOVED).
+		Where("item_type = ?", OBJECT_TYPE_ARGUMENT)
 }

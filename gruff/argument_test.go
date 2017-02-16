@@ -41,8 +41,8 @@ func TestArgumentValidateForCreate(t *testing.T) {
 	a.Type = ARGUMENT_TYPE_CON_TRUTH
 	assert.Nil(t, a.ValidateForCreate())
 
-	a.Type = ARGUMENT_TYPE_PRO_IMPACT
-	assert.Equal(t, "An impact or relevance argument must refer to a target argument", a.ValidateForCreate().Error())
+	a.Type = ARGUMENT_TYPE_PRO_STRENGTH
+	assert.Equal(t, "An argument for or against argument strength must refer to a target argument", a.ValidateForCreate().Error())
 
 	a.TargetArgumentID = &NullableUUID{UUID: uuid.New()}
 	assert.Equal(t, "An Argument can have only one target Claim or target Argument ID", a.ValidateForCreate().Error())
@@ -50,13 +50,7 @@ func TestArgumentValidateForCreate(t *testing.T) {
 	a.TargetClaimID = nil
 	assert.Nil(t, a.ValidateForCreate())
 
-	a.Type = ARGUMENT_TYPE_CON_IMPACT
-	assert.Nil(t, a.ValidateForCreate())
-
-	a.Type = ARGUMENT_TYPE_PRO_RELEVANCE
-	assert.Nil(t, a.ValidateForCreate())
-
-	a.Type = ARGUMENT_TYPE_CON_RELEVANCE
+	a.Type = ARGUMENT_TYPE_CON_STRENGTH
 	assert.Nil(t, a.ValidateForCreate())
 }
 
@@ -95,8 +89,8 @@ func TestArgumentValidateForUpdate(t *testing.T) {
 	a.Type = ARGUMENT_TYPE_CON_TRUTH
 	assert.Nil(t, a.ValidateForUpdate())
 
-	a.Type = ARGUMENT_TYPE_PRO_IMPACT
-	assert.Equal(t, "An impact or relevance argument must refer to a target argument", a.ValidateForUpdate().Error())
+	a.Type = ARGUMENT_TYPE_PRO_STRENGTH
+	assert.Equal(t, "An argument for or against argument strength must refer to a target argument", a.ValidateForUpdate().Error())
 
 	a.TargetArgumentID = &NullableUUID{UUID: uuid.New()}
 	assert.Equal(t, "An Argument can have only one target Claim or target Argument ID", a.ValidateForUpdate().Error())
@@ -104,13 +98,7 @@ func TestArgumentValidateForUpdate(t *testing.T) {
 	a.TargetClaimID = nil
 	assert.Nil(t, a.ValidateForUpdate())
 
-	a.Type = ARGUMENT_TYPE_CON_IMPACT
-	assert.Nil(t, a.ValidateForUpdate())
-
-	a.Type = ARGUMENT_TYPE_PRO_RELEVANCE
-	assert.Nil(t, a.ValidateForUpdate())
-
-	a.Type = ARGUMENT_TYPE_CON_RELEVANCE
+	a.Type = ARGUMENT_TYPE_CON_STRENGTH
 	assert.Nil(t, a.ValidateForUpdate())
 }
 
@@ -129,10 +117,10 @@ func TestOrderByBestArgument(t *testing.T) {
 	TESTDB.Create(&c4)
 	TESTDB.Create(&c5)
 
-	a1 := Argument{Title: "Argument 1", TargetClaimID: NUUID(c1.ID), ClaimID: c2.ID, Impact: 0.1, Relevance: 0.1}
-	a2 := Argument{Title: "Argument 1", TargetClaimID: NUUID(c1.ID), ClaimID: c3.ID, Impact: 0.2, Relevance: 0.0}
-	a3 := Argument{Title: "Argument 1", TargetClaimID: NUUID(c1.ID), ClaimID: c4.ID, Impact: 0.6, Relevance: 1.0}
-	a4 := Argument{Title: "Argument 1", TargetClaimID: NUUID(c1.ID), ClaimID: c5.ID, Impact: 0.7, Relevance: 0.95}
+	a1 := Argument{Title: "Argument 1", TargetClaimID: NUUID(c1.ID), ClaimID: c2.ID, Strength: 0.4}
+	a2 := Argument{Title: "Argument 1", TargetClaimID: NUUID(c1.ID), ClaimID: c3.ID, Strength: 0.2}
+	a3 := Argument{Title: "Argument 1", TargetClaimID: NUUID(c1.ID), ClaimID: c4.ID, Strength: 0.6}
+	a4 := Argument{Title: "Argument 1", TargetClaimID: NUUID(c1.ID), ClaimID: c5.ID, Strength: 0.7}
 	TESTDB.Create(&a1)
 	TESTDB.Create(&a2)
 	TESTDB.Create(&a3)
@@ -147,7 +135,7 @@ func TestOrderByBestArgument(t *testing.T) {
 	assert.Equal(t, a2.ID, args[3].ID)
 }
 
-func TestUpdateImpactUpdateRelevance(t *testing.T) {
+func TestUpdateStrength(t *testing.T) {
 	setupDB()
 	defer teardownDB()
 
@@ -163,115 +151,91 @@ func TestUpdateImpactUpdateRelevance(t *testing.T) {
 	TESTDB.Create(&a1)
 	TESTDB.Create(&a2)
 
-	a1.UpdateImpact(CTX)
-	a1.UpdateRelevance(CTX)
-	a2.UpdateImpact(CTX)
-	a2.UpdateRelevance(CTX)
+	a1.UpdateStrength(CTX)
+	a2.UpdateStrength(CTX)
 	TESTDB.First(&a1)
 	TESTDB.First(&a2)
-	assert.Equal(t, 0.0, a1.Impact)
-	assert.Equal(t, 0.0, a1.Relevance)
-	assert.Equal(t, 0.0, a2.Impact)
-	assert.Equal(t, 0.0, a2.Relevance)
+	assert.Equal(t, 0.0, a1.Strength)
+	assert.Equal(t, 0.0, a2.Strength)
 
-	ao1 := ArgumentOpinion{UserID: 1, ArgumentID: a1.ID, Impact: 0.5, Relevance: 0.1}
+	ao1 := ArgumentOpinion{UserID: 1, ArgumentID: a1.ID, Strength: 0.5}
 	TESTDB.Create(&ao1)
 
-	a1.UpdateImpact(CTX)
-	a1.UpdateRelevance(CTX)
-	a2.UpdateImpact(CTX)
-	a2.UpdateRelevance(CTX)
+	a1.UpdateStrength(CTX)
+	a2.UpdateStrength(CTX)
 	TESTDB.First(&a1)
 	TESTDB.First(&a2)
-	assert.Equal(t, 0.5, a1.Impact)
-	assert.Equal(t, 0.1, a1.Relevance)
-	assert.Equal(t, 0.0, a2.Impact)
-	assert.Equal(t, 0.0, a2.Relevance)
+	assert.Equal(t, 0.5, a1.Strength)
+	assert.Equal(t, 0.0, a2.Strength)
 
-	ao2 := ArgumentOpinion{UserID: 2, ArgumentID: a2.ID, Impact: 0.9, Relevance: 0.9}
+	ao2 := ArgumentOpinion{UserID: 2, ArgumentID: a2.ID, Strength: 0.9}
 	TESTDB.Create(&ao2)
 
-	a1.UpdateImpact(CTX)
-	a1.UpdateRelevance(CTX)
-	a2.UpdateImpact(CTX)
-	a2.UpdateRelevance(CTX)
+	a1.UpdateStrength(CTX)
+	a2.UpdateStrength(CTX)
 	TESTDB.First(&a1)
 	TESTDB.First(&a2)
-	assert.Equal(t, 0.5, a1.Impact)
-	assert.Equal(t, 0.1, a1.Relevance)
-	assert.Equal(t, 0.9, a2.Impact)
-	assert.Equal(t, 0.9, a2.Relevance)
+	assert.Equal(t, 0.5, a1.Strength)
+	assert.Equal(t, 0.9, a2.Strength)
 
-	ao3 := ArgumentOpinion{UserID: 3, ArgumentID: a1.ID, Impact: 0.7, Relevance: 0.5}
+	ao3 := ArgumentOpinion{UserID: 3, ArgumentID: a1.ID, Strength: 0.7}
 	TESTDB.Create(&ao3)
 
-	a1.UpdateImpact(CTX)
-	a1.UpdateRelevance(CTX)
-	a2.UpdateImpact(CTX)
-	a2.UpdateRelevance(CTX)
+	a1.UpdateStrength(CTX)
+	a2.UpdateStrength(CTX)
 	TESTDB.First(&a1)
 	TESTDB.First(&a2)
-	assert.Equal(t, 0.6, a1.Impact)
-	assert.Equal(t, 0.3, a1.Relevance)
-	assert.Equal(t, 0.9, a2.Impact)
-	assert.Equal(t, 0.9, a2.Relevance)
+	assert.Equal(t, 0.6, a1.Strength)
+	assert.Equal(t, 0.9, a2.Strength)
 
-	ao4 := ArgumentOpinion{UserID: 4, ArgumentID: a1.ID, Impact: 0.3, Relevance: 0.6}
-	ao5 := ArgumentOpinion{UserID: 5, ArgumentID: a2.ID, Impact: 0.6, Relevance: 0.5}
-	ao6 := ArgumentOpinion{UserID: 6, ArgumentID: a2.ID, Impact: 0.2, Relevance: 0.3}
-	ao7 := ArgumentOpinion{UserID: 7, ArgumentID: a2.ID, Impact: 0.8, Relevance: 0.4}
-	ao8 := ArgumentOpinion{UserID: 8, ArgumentID: a2.ID, Impact: 0.8, Relevance: 0.4}
+	ao4 := ArgumentOpinion{UserID: 4, ArgumentID: a1.ID, Strength: 0.3}
+	ao5 := ArgumentOpinion{UserID: 5, ArgumentID: a2.ID, Strength: 0.6}
+	ao6 := ArgumentOpinion{UserID: 6, ArgumentID: a2.ID, Strength: 0.2}
+	ao7 := ArgumentOpinion{UserID: 7, ArgumentID: a2.ID, Strength: 0.8}
+	ao8 := ArgumentOpinion{UserID: 8, ArgumentID: a2.ID, Strength: 0.8}
 	TESTDB.Create(&ao4)
 	TESTDB.Create(&ao5)
 	TESTDB.Create(&ao6)
 	TESTDB.Create(&ao7)
 	TESTDB.Create(&ao8)
 
-	a1.UpdateImpact(CTX)
-	a1.UpdateRelevance(CTX)
-	a2.UpdateImpact(CTX)
-	a2.UpdateRelevance(CTX)
+	a1.UpdateStrength(CTX)
+	a2.UpdateStrength(CTX)
 	TESTDB.First(&a1)
 	TESTDB.First(&a2)
-	assert.Equal(t, 0.5, a1.Impact)
-	assert.Equal(t, 0.4, a1.Relevance)
-	assert.Equal(t, 0.66, a2.Impact)
-	assert.Equal(t, 0.5, a2.Relevance)
+	assert.Equal(t, 0.5, a1.Strength)
+	assert.Equal(t, 0.66, a2.Strength)
 
-	ao7.Impact = 0.5
+	ao7.Strength = 0.5
 	TESTDB.Save(&ao7)
 
-	a1.UpdateImpact(CTX)
-	a1.UpdateRelevance(CTX)
-	a2.UpdateImpact(CTX)
-	a2.UpdateRelevance(CTX)
+	a1.UpdateStrength(CTX)
+	a2.UpdateStrength(CTX)
 	TESTDB.First(&a1)
 	TESTDB.First(&a2)
-	assert.Equal(t, 0.5, a1.Impact)
-	assert.Equal(t, 0.4, a1.Relevance)
-	assert.Equal(t, 0.6, a2.Impact)
-	assert.Equal(t, 0.5, a2.Relevance)
+	assert.Equal(t, 0.5, a1.Strength)
+	assert.Equal(t, 0.6, a2.Strength)
 }
 
 func TestArgumentMoveTo(t *testing.T) {
 	setupDB()
 	defer teardownDB()
 
-	c1 := Claim{Title: "Claim 1", Truth: 0.5}
-	c2 := Claim{Title: "Claim 2", Truth: 0.4}
-	c3 := Claim{Title: "Claim 3", Truth: 0.6}
-	c4 := Claim{Title: "Claim 4", Truth: 0.3}
-	c5 := Claim{Title: "Claim 5", Truth: 0.7}
+	c1 := Claim{Title: "Claim 1", Truth: 0.5, TruthRU: 0.6}
+	c2 := Claim{Title: "Claim 2", Truth: 0.4, TruthRU: 0.5}
+	c3 := Claim{Title: "Claim 3", Truth: 0.6, TruthRU: 0.7}
+	c4 := Claim{Title: "Claim 4", Truth: 0.3, TruthRU: 0.4}
+	c5 := Claim{Title: "Claim 5", Truth: 0.7, TruthRU: 0.8}
 	TESTDB.Create(&c1)
 	TESTDB.Create(&c2)
 	TESTDB.Create(&c3)
 	TESTDB.Create(&c4)
 	TESTDB.Create(&c5)
 
-	a1 := Argument{Title: "Argument 1", TargetClaimID: NUUID(c1.ID), ClaimID: c2.ID, Impact: 0.1, Relevance: 0.1}
-	a2 := Argument{Title: "Argument 1", TargetClaimID: NUUID(c1.ID), ClaimID: c3.ID, Impact: 0.2, Relevance: 0.0}
-	a3 := Argument{Title: "Argument 1", TargetClaimID: NUUID(c1.ID), ClaimID: c4.ID, Impact: 0.6, Relevance: 1.0}
-	a4 := Argument{Title: "Argument 1", TargetClaimID: NUUID(c1.ID), ClaimID: c5.ID, Impact: 0.7, Relevance: 0.95}
+	a1 := Argument{Title: "Argument 1", TargetClaimID: NUUID(c1.ID), ClaimID: c2.ID, Strength: 0.1, StrengthRU: 0.2, Type: ARGUMENT_TYPE_PRO_TRUTH}
+	a2 := Argument{Title: "Argument 2", TargetClaimID: NUUID(c1.ID), ClaimID: c3.ID, Strength: 0.2, StrengthRU: 0.3, Type: ARGUMENT_TYPE_CON_TRUTH}
+	a3 := Argument{Title: "Argument 3", TargetClaimID: NUUID(c1.ID), ClaimID: c4.ID, Strength: 0.6, StrengthRU: 0.7, Type: ARGUMENT_TYPE_PRO_TRUTH}
+	a4 := Argument{Title: "Argument 4", TargetClaimID: NUUID(c1.ID), ClaimID: c5.ID, Strength: 0.7, StrengthRU: 0.6, Type: ARGUMENT_TYPE_CON_TRUTH}
 	TESTDB.Create(&a1)
 	TESTDB.Create(&a2)
 	TESTDB.Create(&a3)
@@ -301,13 +265,13 @@ func TestArgumentMoveTo(t *testing.T) {
 	TESTDB.Create(&co33)
 	TESTDB.Create(&co44)
 
-	ao13 := ArgumentOpinion{UserID: u3.ID, ArgumentID: a1.ID, Relevance: 0.2398, Impact: 0.23984}
-	ao14 := ArgumentOpinion{UserID: u4.ID, ArgumentID: a1.ID, Relevance: 0.324, Impact: 0.923}
-	ao21 := ArgumentOpinion{UserID: u1.ID, ArgumentID: a2.ID, Relevance: 0.399, Impact: 0.23984}
-	ao23 := ArgumentOpinion{UserID: u3.ID, ArgumentID: a2.ID, Relevance: 0.322, Impact: 0.9832}
-	ao32 := ArgumentOpinion{UserID: u2.ID, ArgumentID: a3.ID, Relevance: 0.483, Impact: 0.4839}
-	ao42 := ArgumentOpinion{UserID: u2.ID, ArgumentID: a4.ID, Relevance: 0.9843, Impact: 0.2983}
-	ao44 := ArgumentOpinion{UserID: u4.ID, ArgumentID: a4.ID, Relevance: 0.298, Impact: 0.89384}
+	ao13 := ArgumentOpinion{UserID: u3.ID, ArgumentID: a1.ID, Strength: 0.23984}
+	ao14 := ArgumentOpinion{UserID: u4.ID, ArgumentID: a1.ID, Strength: 0.923}
+	ao21 := ArgumentOpinion{UserID: u1.ID, ArgumentID: a2.ID, Strength: 0.23984}
+	ao23 := ArgumentOpinion{UserID: u3.ID, ArgumentID: a2.ID, Strength: 0.9832}
+	ao32 := ArgumentOpinion{UserID: u2.ID, ArgumentID: a3.ID, Strength: 0.4839}
+	ao42 := ArgumentOpinion{UserID: u2.ID, ArgumentID: a4.ID, Strength: 0.2983}
+	ao44 := ArgumentOpinion{UserID: u4.ID, ArgumentID: a4.ID, Strength: 0.89384}
 	TESTDB.Create(&ao13)
 	TESTDB.Create(&ao14)
 	TESTDB.Create(&ao21)
@@ -316,9 +280,10 @@ func TestArgumentMoveTo(t *testing.T) {
 	TESTDB.Create(&ao42)
 	TESTDB.Create(&ao44)
 
-	err := a2.MoveTo(CTX, a1.ID, ARGUMENT_TYPE_PRO_IMPACT)
+	err := a2.MoveTo(CTX, a1.ID, ARGUMENT_TYPE_PRO_STRENGTH)
 
 	assert.Nil(t, err)
+	// Test removal of opinions
 	cos := []ClaimOpinion{}
 	TESTDB.Find(&cos)
 	assert.Equal(t, 7, len(cos))
@@ -328,9 +293,10 @@ func TestArgumentMoveTo(t *testing.T) {
 	TESTDB.Where("id = ?", a2.ID).First(&a2)
 	assert.Nil(t, a2.TargetClaimID)
 	assert.Equal(t, a1.ID, a2.TargetArgumentID.UUID)
-	assert.Equal(t, ARGUMENT_TYPE_PRO_IMPACT, a2.Type)
+	assert.Equal(t, ARGUMENT_TYPE_PRO_STRENGTH, a2.Type)
+	// Test notification of voters
 	ns := []Notification{}
-	TESTDB.Order("user_id ASC").Find(&ns)
+	TESTDB.Scopes(FindArgumentMovedNotifications).Where("item_id = ?", a2.ID).Order("user_id ASC").Find(&ns)
 	assert.Equal(t, 2, len(ns))
 	assert.Equal(t, u1.ID, ns[0].UserID)
 	assert.Equal(t, NOTIFICATION_TYPE_MOVED, ns[0].Type)
@@ -344,27 +310,137 @@ func TestArgumentMoveTo(t *testing.T) {
 	assert.Equal(t, OBJECT_TYPE_ARGUMENT, *ns[1].ItemType)
 	assert.Equal(t, c1.ID, ns[1].OldID.UUID)
 	assert.Equal(t, OBJECT_TYPE_CLAIM, *ns[1].OldType)
+	// Test notification of sub-argument voters
+	ns = []Notification{}
+	TESTDB.Scopes(FindParentArgumentMovedNotifications).Where("item_id = ?", a2.ID).Order("user_id ASC").Find(&ns)
+	assert.Equal(t, 0, len(ns))
+	// Test recalc of rollup scores
+	TESTDB.First(&c1)
+	TESTDB.First(&c2)
+	TESTDB.First(&c3)
+	TESTDB.First(&c4)
+	TESTDB.First(&c5)
+	TESTDB.First(&a1)
+	TESTDB.First(&a2)
+	TESTDB.First(&a3)
+	TESTDB.First(&a4)
+	assert.Equal(t, 0.5089, RoundToDecimal(c1.TruthRU, 4))
+	assert.Equal(t, 0.5, c2.TruthRU)
+	assert.Equal(t, 0.7, c3.TruthRU)
+	assert.Equal(t, 0.4, c4.TruthRU)
+	assert.Equal(t, 0.8, c5.TruthRU)
+	assert.Equal(t, 0.605, a1.StrengthRU)
+	assert.Equal(t, 0.3, a2.StrengthRU)
+	assert.Equal(t, 0.7, a3.StrengthRU)
+	assert.Equal(t, 0.6, a4.StrengthRU)
+
+	// Set up some sub-arguments
+	a5 := Argument{Title: "Argument 5", TargetArgumentID: NUUID(a3.ID), ClaimID: c4.ID, Strength: 0.6, StrengthRU: 0.7, Type: ARGUMENT_TYPE_PRO_TRUTH}
+
+	a6 := Argument{Title: "Argument 6", TargetArgumentID: NUUID(a3.ID), ClaimID: c5.ID, Strength: 0.7, StrengthRU: 0.6, Type: ARGUMENT_TYPE_CON_TRUTH}
+	TESTDB.Create(&a5)
+	TESTDB.Create(&a6)
+
+	ao52 := ArgumentOpinion{UserID: u2.ID, ArgumentID: a5.ID, Strength: 0.2983}
+	ao53 := ArgumentOpinion{UserID: u3.ID, ArgumentID: a5.ID, Strength: 0.89384}
+	ao61 := ArgumentOpinion{UserID: u1.ID, ArgumentID: a6.ID, Strength: 0.89384}
+	TESTDB.Create(&ao52)
+	TESTDB.Create(&ao53)
+	TESTDB.Create(&ao61)
 
 	err = a3.MoveTo(CTX, c2.ID, ARGUMENT_TYPE_CON_TRUTH)
 
 	assert.Nil(t, err)
+	// Test removal of opinions
 	cos = []ClaimOpinion{}
 	TESTDB.Find(&cos)
 	assert.Equal(t, 7, len(cos))
 	aos = []ArgumentOpinion{}
 	TESTDB.Find(&aos)
-	assert.Equal(t, 4, len(aos))
+	assert.Equal(t, 7, len(aos))
 	TESTDB.Where("id = ?", a3.ID).First(&a3)
 	assert.Nil(t, a3.TargetArgumentID)
 	assert.Equal(t, c2.ID, a3.TargetClaimID.UUID)
 	assert.Equal(t, ARGUMENT_TYPE_CON_TRUTH, a3.Type)
 	ns = []Notification{}
-	TESTDB.Order("id ASC").Find(&ns)
+	// Test notification of voters
+	TESTDB.Scopes(FindArgumentMovedNotifications).Where("item_id = ?", a3.ID).Order("user_id ASC").Find(&ns)
+	assert.Equal(t, 1, len(ns))
+	assert.Equal(t, u2.ID, ns[0].UserID)
+	assert.Equal(t, NOTIFICATION_TYPE_MOVED, ns[0].Type)
+	assert.Equal(t, a3.ID, ns[0].ItemID.UUID)
+	assert.Equal(t, OBJECT_TYPE_ARGUMENT, *ns[0].ItemType)
+	assert.Equal(t, c1.ID, ns[0].OldID.UUID)
+	assert.Equal(t, OBJECT_TYPE_CLAIM, *ns[0].OldType)
+	// Test notification of sub-argument voters
+	ns = []Notification{}
+	TESTDB.Scopes(FindParentArgumentMovedNotifications).Where("item_id = ?", a3.ID).Order("user_id ASC").Find(&ns)
 	assert.Equal(t, 3, len(ns))
-	assert.Equal(t, u2.ID, ns[2].UserID)
-	assert.Equal(t, NOTIFICATION_TYPE_MOVED, ns[2].Type)
+	assert.Equal(t, u1.ID, ns[0].UserID)
+	assert.Equal(t, NOTIFICATION_TYPE_PARENT_MOVED, ns[0].Type)
+	assert.Equal(t, a3.ID, ns[0].ItemID.UUID)
+	assert.Equal(t, OBJECT_TYPE_ARGUMENT, *ns[0].ItemType)
+	assert.Equal(t, c1.ID, ns[0].OldID.UUID)
+	assert.Equal(t, OBJECT_TYPE_CLAIM, *ns[0].OldType)
+	assert.Equal(t, u2.ID, ns[1].UserID)
+	assert.Equal(t, NOTIFICATION_TYPE_PARENT_MOVED, ns[1].Type)
+	assert.Equal(t, a3.ID, ns[1].ItemID.UUID)
+	assert.Equal(t, OBJECT_TYPE_ARGUMENT, *ns[1].ItemType)
+	assert.Equal(t, c1.ID, ns[1].OldID.UUID)
+	assert.Equal(t, OBJECT_TYPE_CLAIM, *ns[1].OldType)
+	assert.Equal(t, u3.ID, ns[2].UserID)
+	assert.Equal(t, NOTIFICATION_TYPE_PARENT_MOVED, ns[2].Type)
 	assert.Equal(t, a3.ID, ns[2].ItemID.UUID)
 	assert.Equal(t, OBJECT_TYPE_ARGUMENT, *ns[2].ItemType)
 	assert.Equal(t, c1.ID, ns[2].OldID.UUID)
 	assert.Equal(t, OBJECT_TYPE_CLAIM, *ns[2].OldType)
+	// Test recalc of rollup scores
+	TESTDB.First(&c1)
+	TESTDB.First(&c2)
+	TESTDB.First(&c3)
+	TESTDB.First(&c4)
+	TESTDB.First(&c5)
+	TESTDB.First(&a1)
+	TESTDB.First(&a2)
+	TESTDB.First(&a3)
+	TESTDB.First(&a4)
+	assert.Equal(t, 0.3689, RoundToDecimal(c1.TruthRU, 4))
+	assert.Equal(t, 0.36, c2.TruthRU)
+	assert.Equal(t, 0.7, c3.TruthRU)
+	assert.Equal(t, 0.4, c4.TruthRU)
+	assert.Equal(t, 0.8, c5.TruthRU)
+	assert.Equal(t, 0.605, a1.StrengthRU)
+	assert.Equal(t, 0.3, a2.StrengthRU)
+	assert.Equal(t, 0.7, a3.StrengthRU)
+	assert.Equal(t, 0.6, a4.StrengthRU)
+}
+
+func TestArgumentScoreRU(t *testing.T) {
+	setupDB()
+	defer teardownDB()
+
+	c1 := Claim{Title: "Claim 1", TruthRU: 0.5}
+	c2 := Claim{Title: "Claim 2", Truth: 0.4}
+	c3 := Claim{Title: "Claim 3", TruthRU: 0.6}
+	c4 := Claim{Title: "Claim 4", TruthRU: 0.3}
+	c5 := Claim{Title: "Claim 5", TruthRU: 0.7}
+	TESTDB.Create(&c1)
+	TESTDB.Create(&c2)
+	TESTDB.Create(&c3)
+	TESTDB.Create(&c4)
+	TESTDB.Create(&c5)
+
+	a1 := Argument{Title: "Argument 1", TargetClaimID: NUUID(c1.ID), ClaimID: c2.ID, Strength: 0.1, StrengthRU: 0.15}
+	a2 := Argument{Title: "Argument 2", TargetClaimID: NUUID(c1.ID), ClaimID: c3.ID, Strength: 0.2}
+	a3 := Argument{Title: "Argument 3", TargetClaimID: NUUID(c1.ID), ClaimID: c4.ID, Strength: 0.6, StrengthRU: 0.7}
+	a4 := Argument{Title: "Argument 4", TargetClaimID: NUUID(c1.ID), ClaimID: c5.ID, Strength: 0.7, StrengthRU: 0.65}
+	TESTDB.Create(&a1)
+	TESTDB.Create(&a2)
+	TESTDB.Create(&a3)
+	TESTDB.Create(&a4)
+
+	assert.Equal(t, 0.06, a1.ScoreRU(CTX))
+	assert.Equal(t, 0.12, a2.ScoreRU(CTX))
+	assert.Equal(t, 0.21, a3.ScoreRU(CTX))
+	assert.Equal(t, 0.455, RoundToDecimal(a4.ScoreRU(CTX), 3))
 }

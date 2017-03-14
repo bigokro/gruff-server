@@ -14,8 +14,6 @@ func main() {
 	config.Init()
 	api.RW_DB_POOL = config.InitDB()
 	api.RW_DB_POOL.LogMode(true)
-	api.RW_DB_POOL.DB().SetMaxIdleConns(100)
-	api.RW_DB_POOL.DB().SetMaxIdleConns(1000)
 
 	root := api.SetUpRouter(false, api.RW_DB_POOL)
 

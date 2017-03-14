@@ -1,12 +1,13 @@
 package api
 
 import (
-	"github.com/bigokro/gruff-server/gruff"
-	"github.com/jinzhu/gorm"
-	"github.com/labstack/echo"
 	_ "os"
 	"reflect"
 	"strings"
+
+	"github.com/bigokro/gruff-server/gruff"
+	"github.com/jinzhu/gorm"
+	"github.com/labstack/echo"
 )
 
 var RW_DB_POOL *gorm.DB
@@ -28,14 +29,20 @@ func NewContext(test bool, db *gorm.DB) *Context {
 	}
 }
 
+func DBMiddleware(db *gorm.DB) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			c.Set("Database", db)
+			next(c)
+			return nil
+		}
+	}
+}
+
 func (ctx *Context) DialDatabase(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		if !ctx.Test {
-			db := RW_DB_POOL.Begin()
-			defer db.Commit()
-			db.LogMode(true)
-
-			ctx.Database = db
+			ctx.Database = c.Get("Database").(*gorm.DB)
 			ctx.Payload = make(map[string]interface{})
 		}
 

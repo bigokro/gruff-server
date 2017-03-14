@@ -14,6 +14,7 @@ func SetUpRouter(test bool, db *gorm.DB) *echo.Echo {
 	root.Use(middleware.CORS())
 	root.Use(middleware.Gzip())
 	root.Use(middleware.Secure())
+	root.Use(DBMiddleware(db))
 
 	ctx := NewContext(test, db)
 	root.Use(ctx.DialDatabase)

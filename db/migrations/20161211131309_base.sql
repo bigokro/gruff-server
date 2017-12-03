@@ -16,7 +16,7 @@ SET client_min_messages = warning;
 --
 
 CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;
-
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 --
 -- Name: EXTENSION plpgsql; Type: COMMENT; Schema: -; Owner:

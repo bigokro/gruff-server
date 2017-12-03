@@ -1,28 +1,28 @@
 package api
 
 import (
-	"errors"
-	"fmt"
-	"github.com/bigokro/gruff-server/gruff"
-	"github.com/dgrijalva/jwt-go"
-	"github.com/jinzhu/gorm"
-	"github.com/labstack/echo"
 	"net/http"
 	"os"
 	"reflect"
 	"strconv"
 	"strings"
+
+	"github.com/bigokro/gruff-server/gruff"
+	"github.com/jinzhu/gorm"
+	"github.com/labstack/echo"
 )
 
-func (ctx *Context) List(c echo.Context) error {
+func List(c echo.Context) error {
+	ctx := ServerContext(c)
 	db := ctx.Database
+
 	db = BasicJoins(ctx, c, db)
 	db = BasicPaging(ctx, c, db)
 
 	items := reflect.New(reflect.SliceOf(ctx.Type)).Interface()
 	err := db.Find(items).Error
 	if err != nil {
-		return gruff.NewServerError(err.Error())
+		return AddGruffError(ctx, c, gruff.NewServerError(err.Error()))
 	}
 
 	items = itemsOrEmptySlice(ctx.Type, items)
@@ -35,215 +35,188 @@ func (ctx *Context) List(c echo.Context) error {
 	}
 }
 
-func (ctx *Context) Create(c echo.Context) error {
+func Create(c echo.Context) error {
+	ctx := ServerContext(c)
+	db := ctx.Database
+
 	item := reflect.New(ctx.Type).Interface()
 	if err := c.Bind(item); err != nil {
-		return err
+		return AddGruffError(ctx, c, gruff.NewServerError(err.Error()))
 	}
 
 	valerr := BasicValidationForCreate(ctx, c, item)
 	if valerr != nil {
-		return valerr
+		return AddGruffError(ctx, c, gruff.NewServerError(valerr.Error()))
 	}
 
 	if gruff.IsIdentifier(ctx.Type) {
-		gruff.SetCreatedByID(item, CurrentUserID(c))
+		gruff.SetCreatedByID(item, ctx.UserContext.ID)
 	}
 
-	dberr := ctx.Database.Create(item).Error
+	dberr := db.Create(item).Error
 	if dberr != nil {
-		return dberr
+		return AddGruffError(ctx, c, gruff.NewServerError(dberr.Error()))
 	}
 
 	return c.JSON(http.StatusCreated, item)
 }
 
-func (ctx *Context) Get(c echo.Context) error {
+func Get(c echo.Context) error {
+	ctx := ServerContext(c)
+	db := ctx.Database
+
 	id := c.Param("id")
 	if id == "" {
-		c.String(http.StatusNotFound, "NotFound")
-		return errors.New("Not found")
+		return AddGruffError(ctx, c, gruff.NewNotFoundError("Not Found"))
 	}
 
 	item := reflect.New(ctx.Type).Interface()
 
-	db := ctx.Database
 	db = BasicJoins(ctx, c, db)
 	//db = BasicFetch(ctx, c, db, id)
 
 	err := db.Where("id = ?", id).First(item).Error
 	if err != nil {
-		c.String(http.StatusNotFound, "NotFound")
-		return err
+		return AddGruffError(ctx, c, gruff.NewServerError(err.Error()))
 	}
 
 	return c.JSON(http.StatusOK, item)
 }
 
-func (ctx *Context) GetParent(c echo.Context) error {
-	parent := false
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		id, err = strconv.Atoi(c.Param("ownId"))
-		parent = true
-		if err != nil {
-			c.String(http.StatusNotFound, "NotFound")
-			return err
-		}
-	}
-
+func Update(c echo.Context) error {
+	ctx := ServerContext(c)
 	db := ctx.Database
-	db = BasicJoins(ctx, c, db)
-	item := reflect.New(ctx.Type).Interface()
 
-	if parent {
-		item = reflect.New(ctx.ParentType).Interface()
-		db = BasicFetch(ctx, c, db, id)
-	}
-
-	err = db.Where("id = ?", id).First(item).Error
-	if err != nil {
-		c.String(http.StatusNotFound, "NotFound")
-		return err
-	}
-
-	return c.JSON(http.StatusOK, item)
-}
-
-func (ctx *Context) Update(c echo.Context) error {
 	id := c.Param("id")
 	if id == "" {
-		c.String(http.StatusNotFound, "NotFound")
-		return errors.New("Not Found")
+		return AddGruffError(ctx, c, gruff.NewNotFoundError("Not Found"))
 	}
 
 	item := reflect.New(ctx.Type).Interface()
 	err := ctx.Database.Where("id = ?", id).First(item).Error
 	if err != nil {
-		c.String(http.StatusNotFound, "NotFound")
-		return err
+		return AddGruffError(ctx, c, gruff.NewServerError(err.Error()))
 	}
 
 	err = BasicValidationForUpdate(ctx, c, item)
 	if err != nil {
-		return err
+		return AddGruffError(ctx, c, gruff.NewServerError(err.Error()))
 	}
 
 	if err := c.Bind(item); err != nil {
-		return err
+		return AddGruffError(ctx, c, gruff.NewServerError(err.Error()))
 	}
 
-	ctx.Database.Set("gorm:save_associations", false).Save(item)
-	if ctx.Database.Error != nil {
-		return ctx.Database.Error
+	dberr := db.Set("gorm:save_associations", false).Save(item).Error
+	if dberr != nil {
+		return AddGruffError(ctx, c, gruff.NewServerError(dberr.Error()))
 	}
 
 	return c.JSON(http.StatusAccepted, item)
 }
 
-func (ctx *Context) Delete(c echo.Context) error {
-	id := c.Param("id")
-	if id == "" {
-		c.String(http.StatusNotFound, "NotFound")
-		return errors.New("Not Found")
-	}
-
-	item := reflect.New(ctx.Type).Interface()
-	err := ctx.Database.Where("id = ?", id).First(item).Error
-	if err != nil {
-		fmt.Println("It didn't find anything")
-		c.String(http.StatusNotFound, "NotFound")
-		return err
-	}
-
-	err = ctx.Database.Delete(item).Error
-	if err != nil {
-		return err
-	}
-
-	return c.JSON(http.StatusOK, item)
-}
-
-func (ctx *Context) Destroy(c echo.Context) error {
-	id := c.Param("id")
-	if id == "" {
-		c.String(http.StatusNotFound, "NotFound")
-		return errors.New("Not Found")
-	}
-
-	item := reflect.New(ctx.Type).Interface()
-	err := ctx.Database.Where("id = ?", id).First(item).Error
-	if err != nil {
-		c.String(http.StatusNotFound, "NotFound")
-		return err
-	}
-
-	err = ctx.Database.Unscoped().Delete(item).Error
-	if err != nil {
-		return err
-	}
-
-	return c.JSON(http.StatusOK, item)
-}
-
-func (ctx *Context) AddAssociation(c echo.Context) error {
+func Delete(c echo.Context) error {
+	ctx := ServerContext(c)
 	db := ctx.Database
 
-	parentId := c.Param("parentId")
+	id := c.Param("id")
+	if id == "" {
+		return AddGruffError(ctx, c, gruff.NewNotFoundError("Not Found"))
+	}
+
+	item := reflect.New(ctx.Type).Interface()
+	err := db.Where("id = ?", id).First(item).Error
+	if err != nil {
+		return AddGruffError(ctx, c, gruff.NewServerError(err.Error()))
+	}
+
+	err = db.Delete(item).Error
+	if err != nil {
+		return AddGruffError(ctx, c, gruff.NewServerError(err.Error()))
+	}
+
+	return c.JSON(http.StatusOK, item)
+}
+
+func Destroy(c echo.Context) error {
+	ctx := ServerContext(c)
+	db := ctx.Database
+
+	id := c.Param("id")
+	if id == "" {
+		return AddGruffError(ctx, c, gruff.NewNotFoundError("Not Found"))
+	}
+
+	item := reflect.New(ctx.Type).Interface()
+	err := db.Where("id = ?", id).First(item).Error
+	if err != nil {
+		return AddGruffError(ctx, c, gruff.NewServerError(err.Error()))
+	}
+
+	err = db.Unscoped().Delete(item).Error
+	if err != nil {
+		return AddGruffError(ctx, c, gruff.NewServerError(err.Error()))
+	}
+
+	return c.JSON(http.StatusOK, item)
+}
+
+func AddAssociation(c echo.Context) error {
+	ctx := ServerContext(c)
+	db := ctx.Database
+
+	parentID := c.Param("parentId")
 	id := c.Param("id")
 
 	parentItem := reflect.New(ctx.ParentType).Interface()
-	if err := db.Where("id = ?", parentId).First(parentItem).Error; err != nil {
-		c.String(http.StatusNotFound, "NotFound")
-		return err
+	if err := db.Where("id = ?", parentID).First(parentItem).Error; err != nil {
+		return AddGruffError(ctx, c, gruff.NewServerError(err.Error()))
 	}
 
 	item := reflect.New(ctx.Type).Interface()
 	if err := db.Where("id = ?", id).First(item).Error; err != nil {
-		c.String(http.StatusNotFound, "NotFound")
-		return err
+		return AddGruffError(ctx, c, gruff.NewServerError(err.Error()))
 	}
 
-	associationName := ctx.AssociationFieldNameFromPath(c)
+	associationName := AssociationFieldNameFromPath(c)
 	if err := db.Model(parentItem).Association(associationName).Append(item).Error; err != nil {
-		return gruff.NewServerError(err.Error())
+		return AddGruffError(ctx, c, gruff.NewServerError(err.Error()))
 	}
 
 	return c.JSON(http.StatusCreated, item)
 }
 
-func (ctx *Context) RemoveAssociation(c echo.Context) error {
+func RemoveAssociation(c echo.Context) error {
+	ctx := ServerContext(c)
 	db := ctx.Database
 
-	parentId := c.Param("parentId")
+	parentID := c.Param("parentId")
 	id := c.Param("id")
 
 	parentItem := reflect.New(ctx.ParentType).Interface()
-	if err := db.Where("id = ?", parentId).First(parentItem).Error; err != nil {
-		c.String(http.StatusNotFound, "NotFound")
-		return err
+	if err := db.Where("id = ?", parentID).First(parentItem).Error; err != nil {
+		return AddGruffError(ctx, c, gruff.NewServerError(err.Error()))
 	}
 
 	item := reflect.New(ctx.Type).Interface()
 	if err := db.Where("id = ?", id).First(item).Error; err != nil {
-		c.String(http.StatusNotFound, "NotFound")
-		return err
+		return AddGruffError(ctx, c, gruff.NewServerError(err.Error()))
 	}
 
-	associationName := ctx.AssociationFieldNameFromPath(c)
+	associationName := AssociationFieldNameFromPath(c)
 	if err := db.Model(parentItem).Association(associationName).Delete(item).Error; err != nil {
-		return gruff.NewServerError(err.Error())
+		return AddGruffError(ctx, c, gruff.NewServerError(err.Error()))
 	}
 
 	return c.JSON(http.StatusOK, item)
 }
 
-func BasicJoins(ctx *Context, c echo.Context, db *gorm.DB) *gorm.DB {
+func BasicJoins(ctx *gruff.ServerContext, c echo.Context, db *gorm.DB) *gorm.DB {
 	db = joinsFor(db, ctx)
 	return db
 }
 
-func BasicFetch(ctx *Context, c echo.Context, db *gorm.DB, uid int) *gorm.DB {
+func BasicFetch(ctx *gruff.ServerContext, c echo.Context, db *gorm.DB, uid int) *gorm.DB {
 	if uid > 0 {
 		id := uint(uid)
 		path := c.Path()
@@ -264,7 +237,7 @@ func fetchFor(db *gorm.DB, path string, userId uint) *gorm.DB {
 	return db
 }
 
-func joinsFor(db *gorm.DB, ctx *Context) *gorm.DB {
+func joinsFor(db *gorm.DB, ctx *gruff.ServerContext) *gorm.DB {
 	t := ctx.Type
 	elemT := t
 	if elemT.Kind() == reflect.Ptr {
@@ -281,7 +254,7 @@ func joinsFor(db *gorm.DB, ctx *Context) *gorm.DB {
 	return db
 }
 
-func BasicPaging(ctx *Context, c echo.Context, db *gorm.DB, opts ...bool) *gorm.DB {
+func BasicPaging(ctx *gruff.ServerContext, c echo.Context, db *gorm.DB, opts ...bool) *gorm.DB {
 	queryTC := true
 	if len(opts) > 0 {
 		queryTC = opts[0]
@@ -308,7 +281,7 @@ func BasicPaging(ctx *Context, c echo.Context, db *gorm.DB, opts ...bool) *gorm.
 	return db
 }
 
-func QueryTotalCount(ctx *Context, c echo.Context) {
+func QueryTotalCount(ctx *gruff.ServerContext, c echo.Context) {
 	item := reflect.New(ctx.Type).Interface()
 	var n int
 
@@ -320,7 +293,7 @@ func QueryTotalCount(ctx *Context, c echo.Context) {
 	ctx.Payload["ct"] = n
 }
 
-func limitQueryByConfig(ctx *Context, db *gorm.DB, key string, requestLimit int) *gorm.DB {
+func limitQueryByConfig(ctx *gruff.ServerContext, db *gorm.DB, key string, requestLimit int) *gorm.DB {
 	dbLimit := requestLimit
 	limitStr := os.Getenv(key)
 	limit, err := strconv.Atoi(limitStr)
@@ -342,42 +315,19 @@ func itemsOrEmptySlice(t reflect.Type, items interface{}) interface{} {
 	return items
 }
 
-func BasicValidationForCreate(ctx *Context, c echo.Context, item interface{}) gruff.GruffError {
+func BasicValidationForCreate(ctx *gruff.ServerContext, c echo.Context, item interface{}) gruff.GruffError {
 	if gruff.IsValidator(reflect.TypeOf(item)) {
 		validator := item.(gruff.Validator)
 		return validator.ValidateForCreate()
-	} else {
-		return nil
 	}
+
+	return nil
 }
 
-func BasicValidationForUpdate(ctx *Context, c echo.Context, item interface{}) error {
+func BasicValidationForUpdate(ctx *gruff.ServerContext, c echo.Context, item interface{}) error {
 	if gruff.IsValidator(ctx.Type) {
 		return gruff.ValidateStructFields(item)
-	} else {
-		return nil
-	}
-}
-
-func CurrentUserID(c echo.Context) uint64 {
-	// TODO: extract to middleware
-	user := c.Get("user").(*jwt.Token)
-	claims := user.Claims.(jwt.MapClaims)
-	fmt.Printf("Claims: %+v\n", claims)
-	if claims["id"] != nil {
-		id := claims["id"].(float64)
-		return uint64(id)
 	}
 
-	return 0
-}
-
-// TODO: use GruffError...
-func CurrentUser(c echo.Context, db *gorm.DB) (gruff.User, error) {
-	// TODO: extract to middleware
-	userId := CurrentUserID(c)
-	fmt.Println("UserId:", userId)
-	user := gruff.User{}
-	err := db.First(&user, userId).Error
-	return user, err
+	return nil
 }

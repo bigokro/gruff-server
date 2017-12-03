@@ -14,82 +14,94 @@ func SetUpRouter(test bool, db *gorm.DB) *echo.Echo {
 	root.Use(middleware.CORS())
 	root.Use(middleware.Gzip())
 	root.Use(middleware.Secure())
-	root.Use(DBMiddleware(db))
+	root.Use(middleware.SecureWithConfig(middleware.SecureConfig{
+		XSSProtection:         "1; mode=block",
+		ContentTypeNosniff:    "nosniff",
+		XFrameOptions:         "SAMEORIGIN",
+		ContentSecurityPolicy: "default-src 'self'",
+	}))
+	root.Use(Secure(
+		ReferrerPolicy("same-origin"),
+	))
 
-	ctx := NewContext(test, db)
-	root.Use(ctx.DialDatabase)
-	root.Use(ctx.DetermineType)
+	root.Use(DBMiddleware(db))
+	root.Use(DetermineType)
+	root.Use(InitializePayload)
+	root.Use(SettingHeaders(test))
 
 	root.GET("/", Home)
 
 	// Public Api
 	public := root.Group("/api")
 
-	public.POST("/auth", ctx.SignIn)
-	public.POST("/users", ctx.SignUp)
+	public.POST("/auth", SignIn)
+	public.POST("/users", SignUp)
 
 	// Private Api
 	private := root.Group("/api")
-	private.Use(middleware.JWT([]byte("secret")))
+	config := middleware.JWTConfig{
+		Claims:     &jwtCustomClaims{},
+		SigningKey: []byte("secret"),
+	}
+	private.Use(middleware.JWTWithConfig(config))
+	private.Use(SessionUser)
 
-	private.GET("/users", ctx.List)
-	private.GET("/users/:id", ctx.Get)
-	private.PUT("/users/:id", ctx.Update)
-	private.PUT("/users/password", ctx.ChangePassword)
-	public.PUT("/users/changePassword", ctx.ChangePassword)
-	private.DELETE("/users/:id", ctx.Delete)
+	private.GET("/users", List)
+	private.GET("/users/:id", Get)
+	private.PUT("/users/:id", Update)
+	private.PUT("/users/password", ChangePassword)
+	public.PUT("/users/changePassword", ChangePassword)
+	private.DELETE("/users/:id", Delete)
 
-	public.GET("/arguments", ctx.List)
-	public.GET("/arguments/:id", ctx.GetArgument)
-	private.POST("/arguments", ctx.CreateArgument)
-	private.PUT("/arguments/:id", ctx.Update)
-	private.DELETE("/arguments/:id", ctx.Delete)
-	private.PUT("/arguments/:id/move/:newId/type/:type", ctx.MoveArgument)
+	public.GET("/arguments", List)
+	public.GET("/arguments/:id", GetArgument)
+	private.POST("/arguments", CreateArgument)
+	private.PUT("/arguments/:id", Update)
+	private.DELETE("/arguments/:id", Delete)
+	private.PUT("/arguments/:id/move/:newId/type/:type", MoveArgument)
 
-	private.POST("/arguments/:id/impact", ctx.SetScore)
-	private.PUT("/arguments/:id/impact", ctx.SetScore)
-	private.POST("/arguments/:id/relevance", ctx.SetScore)
-	private.PUT("/arguments/:id/relevance", ctx.SetScore)
+	private.POST("/arguments/:id/strength", SetScore)
+	private.PUT("/arguments/:id/strength", SetScore)
 
-	public.GET("/contexts", ctx.List)
-	public.GET("/contexts/:id", ctx.Get)
-	private.POST("/contexts", ctx.Create)
-	private.PUT("/contexts/:id", ctx.Update)
-	private.DELETE("/contexts/:id", ctx.Delete)
+	public.GET("/contexts", List)
+	public.GET("/contexts/:id", Get)
+	private.POST("/contexts", Create)
+	private.PUT("/contexts/:id", Update)
+	private.DELETE("/contexts/:id", Delete)
 
-	private.POST("/claims/:parentId/contexts/:id", ctx.AddAssociation)
-	private.DELETE("/claims/:parentId/contexts/:id", ctx.RemoveAssociation)
+	private.POST("/claims/:parentId/contexts/:id", AddAssociation)
+	private.DELETE("/claims/:parentId/contexts/:id", RemoveAssociation)
 
-	public.GET("/claims", ctx.List)
-	public.GET("/claims/top", ctx.ListTopClaims)
-	public.GET("/claims/:id", ctx.GetClaim)
-	private.POST("/claims", ctx.Create)
-	private.PUT("/claims/:id", ctx.Update)
-	private.DELETE("/claims/:id", ctx.Delete)
-	private.POST("/claims/:id/truth", ctx.SetScore)
-	private.PUT("/claims/:id/truth", ctx.SetScore)
+	public.GET("/claims", List)
+	public.GET("/claims/top", ListTopClaims)
+	public.GET("/claims/:id", GetClaim)
+	private.POST("/claims", Create)
+	private.PUT("/claims/:id", Update)
+	private.DELETE("/claims/:id", Delete)
+	private.POST("/claims/:id/truth", SetScore)
+	private.PUT("/claims/:id/truth", SetScore)
 
-	public.GET("/links", ctx.List)
-	public.GET("/links/:id", ctx.Get)
-	private.POST("/links", ctx.Create)
-	private.PUT("/links/:id", ctx.Update)
-	private.DELETE("/links/:id", ctx.Delete)
+	public.GET("/links", List)
+	public.GET("/links/:id", Get)
+	private.POST("/links", Create)
+	private.PUT("/links/:id", Update)
+	private.DELETE("/links/:id", Delete)
 
-	public.GET("/tags", ctx.List)
-	public.GET("/tags/:id", ctx.Get)
-	private.POST("/tags", ctx.Create)
-	private.PUT("/tags/:id", ctx.Update)
-	private.DELETE("/tags/:id", ctx.Delete)
+	public.GET("/tags", List)
+	public.GET("/tags/:id", Get)
+	private.POST("/tags", Create)
+	private.PUT("/tags/:id", Update)
+	private.DELETE("/tags/:id", Delete)
 
-	public.GET("/values", ctx.List)
-	public.GET("/values/:id", ctx.Get)
-	private.POST("/values", ctx.Create)
-	private.PUT("/values/:id", ctx.Update)
-	private.DELETE("/values/:id", ctx.Delete)
+	public.GET("/values", List)
+	public.GET("/values/:id", Get)
+	private.POST("/values", Create)
+	private.PUT("/values/:id", Update)
+	private.DELETE("/values/:id", Delete)
 
-	private.GET("/notifications", ctx.ListNotifications)
-	private.POST("/notifications/:id", ctx.MarkNotificationViewed)
-	private.PUT("/notifications/:id", ctx.MarkNotificationViewed)
+	private.GET("/notifications", ListNotifications)
+	private.POST("/notifications/:id", MarkNotificationViewed)
+	private.PUT("/notifications/:id", MarkNotificationViewed)
 
 	return root
 }

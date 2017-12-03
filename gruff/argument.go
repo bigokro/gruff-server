@@ -2,6 +2,7 @@ package gruff
 
 import (
 	"fmt"
+
 	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
 )
@@ -170,7 +171,7 @@ func (a Argument) ValidateType() GruffError {
 
 // Business methods
 
-func (a Argument) UpdateStrength(ctx ServerContext) {
+func (a Argument) UpdateStrength(ctx *ServerContext) {
 	ctx.Database.Exec("UPDATE arguments a SET strength = (SELECT AVG(strength) FROM argument_opinions WHERE argument_id = a.id) WHERE id = ?", a.ID)
 
 	// TODO: test
@@ -180,7 +181,7 @@ func (a Argument) UpdateStrength(ctx ServerContext) {
 	}
 }
 
-func (a *Argument) UpdateStrengthRU(ctx ServerContext) {
+func (a *Argument) UpdateStrengthRU(ctx *ServerContext) {
 	// TODO: do it all in SQL?
 	proArgs, conArgs := a.Arguments(ctx)
 
@@ -214,7 +215,7 @@ func (a *Argument) UpdateStrengthRU(ctx ServerContext) {
 	a.UpdateAncestorRUs(ctx)
 }
 
-func (a Argument) UpdateAncestorRUs(ctx ServerContext) {
+func (a Argument) UpdateAncestorRUs(ctx *ServerContext) {
 	if a.TargetClaimID != nil {
 		claim := a.TargetClaim
 		if claim == nil {
@@ -237,7 +238,7 @@ func (a Argument) UpdateAncestorRUs(ctx ServerContext) {
 	}
 }
 
-func (a *Argument) MoveTo(ctx ServerContext, newId uuid.UUID, t int) GruffError {
+func (a *Argument) MoveTo(ctx *ServerContext, newId uuid.UUID, t int) GruffError {
 	db := ctx.Database
 
 	oldArg := Argument{TargetClaimID: a.TargetClaimID, TargetArgumentID: a.TargetArgumentID, Type: a.Type}
@@ -327,7 +328,7 @@ func (a *Argument) MoveTo(ctx ServerContext, newId uuid.UUID, t int) GruffError 
 	return nil
 }
 
-func (a Argument) Score(ctx ServerContext) float64 {
+func (a Argument) Score(ctx *ServerContext) float64 {
 	c := a.Claim
 	if c == nil {
 		c = &Claim{}
@@ -337,7 +338,7 @@ func (a Argument) Score(ctx ServerContext) float64 {
 	return a.Strength * c.Truth
 }
 
-func (a Argument) ScoreRU(ctx ServerContext) float64 {
+func (a Argument) ScoreRU(ctx *ServerContext) float64 {
 	c := a.Claim
 	if c == nil {
 		c = &Claim{}
@@ -357,7 +358,7 @@ func (a Argument) ScoreRU(ctx ServerContext) float64 {
 	return strength * truth
 }
 
-func (a Argument) Arguments(ctx ServerContext) (proArgs []Argument, conArgs []Argument) {
+func (a Argument) Arguments(ctx *ServerContext) (proArgs []Argument, conArgs []Argument) {
 	proArgs = a.ProStrength
 	conArgs = a.ConStrength
 

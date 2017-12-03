@@ -43,7 +43,19 @@ type Claim struct {
 	Tags        []Tag      `json:"tags,omitempty"  gorm:"many2many:claim_tags;"`
 }
 
-func (c Claim) UpdateTruth(ctx ServerContext) {
+func (c Claim) ValidateForCreate() GruffError {
+	return ValidateStruct(c)
+}
+
+func (c Claim) ValidateForUpdate() GruffError {
+	return c.ValidateForCreate()
+}
+
+func (c Claim) ValidateField(f string) GruffError {
+	return ValidateStructField(c, f)
+}
+
+func (c Claim) UpdateTruth(ctx *ServerContext) {
 	ctx.Database.Exec("UPDATE claims c SET truth = (SELECT AVG(truth) FROM claim_opinions WHERE claim_id = c.id) WHERE id = ?", c.ID)
 
 	// TODO: test
@@ -53,7 +65,7 @@ func (c Claim) UpdateTruth(ctx ServerContext) {
 	}
 }
 
-func (c *Claim) UpdateTruthRU(ctx ServerContext) {
+func (c *Claim) UpdateTruthRU(ctx *ServerContext) {
 	// TODO: do it all in SQL?
 	// TODO: should updates be recursive? (first, calculate sub-argument RUs)
 	//       or, should it trigger an update of anyone that references it?
@@ -89,7 +101,7 @@ func (c *Claim) UpdateTruthRU(ctx ServerContext) {
 	c.UpdateAncestorRUs(ctx)
 }
 
-func (c Claim) UpdateAncestorRUs(ctx ServerContext) {
+func (c Claim) UpdateAncestorRUs(ctx *ServerContext) {
 	args := []Argument{}
 	ctx.Database.Where("claim_id = ?", c.ID).Find(&args)
 	for _, arg := range args {
@@ -100,7 +112,7 @@ func (c Claim) UpdateAncestorRUs(ctx ServerContext) {
 	}
 }
 
-func (c Claim) Arguments(ctx ServerContext) (proArgs []Argument, conArgs []Argument) {
+func (c Claim) Arguments(ctx *ServerContext) (proArgs []Argument, conArgs []Argument) {
 	proArgs = c.ProTruth
 	conArgs = c.ConTruth
 

@@ -3,9 +3,10 @@ package gruff
 import (
 	"database/sql/driver"
 	"errors"
-	"github.com/google/uuid"
 	"reflect"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type Identifier struct {
@@ -15,6 +16,18 @@ type Identifier struct {
 	DeletedAt   *time.Time `json:"-" settable:"false"`
 	CreatedByID uint64     `json:"createdById"`
 	CreatedBy   *User      `json:"createdBy"`
+}
+
+func (i Identifier) ValidateForCreate() GruffError {
+	return ValidateStruct(i)
+}
+
+func (i Identifier) ValidateForUpdate() GruffError {
+	return i.ValidateForCreate()
+}
+
+func (i Identifier) ValidateField(f string) GruffError {
+	return ValidateStructField(i, f)
 }
 
 func SetCreatedByID(item interface{}, id uint64) error {
@@ -59,16 +72,17 @@ func (u *NullableUUID) Value() (driver.Value, error) {
 func (u *NullableUUID) Scan(value interface{}) error {
 	if u == nil {
 		return nil
-	} else {
-		if value != nil {
-			ub := value.([]byte)
-			up, err := uuid.ParseBytes(ub)
-			if err != nil {
-				return err
-			}
-			u.UUID = up
-		}
 	}
+
+	if value != nil {
+		ub := value.([]byte)
+		up, err := uuid.ParseBytes(ub)
+		if err != nil {
+			return err
+		}
+		u.UUID = up
+	}
+
 	return nil
 }
 

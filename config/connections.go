@@ -2,10 +2,10 @@ package config
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
-	"os"
-	"runtime"
 )
 
 var CONFIGURATIONS map[string]string = map[string]string{
@@ -22,8 +22,6 @@ func Init() {
 	if os.Getenv("GRUFF_PORT") == "" {
 		os.Setenv("GRUFF_PORT", CONFIGURATIONS["GRUFF_PORT"])
 	}
-
-	runtime.GOMAXPROCS(runtime.NumCPU())
 }
 
 func InitDB() (rw *gorm.DB) {

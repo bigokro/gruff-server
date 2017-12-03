@@ -1,112 +1,76 @@
 package api
 
 import (
-	"fmt"
+	"net/http"
+	"strconv"
+
 	"github.com/bigokro/gruff-server/gruff"
 	"github.com/google/uuid"
 	"github.com/labstack/echo"
-	"net/http"
-	"strconv"
 )
 
-func Arguments(c echo.Context) error {
-	return c.String(http.StatusOK, "Arguments")
-}
+func GetArgument(c echo.Context) error {
+	ctx := ServerContext(c)
+	db := ctx.Database
 
-func (ctx *Context) GetArgument(c echo.Context) error {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		c.String(http.StatusNotFound, "NotFound")
-		return err
+		return AddGruffError(ctx, c, gruff.NewNotFoundError(err.Error()))
 	}
 
 	argument := gruff.Argument{}
 
-	db := ctx.Database
-	db = db.Preload("Claim")
 	db = db.Preload("Claim.Links")
 	db = db.Preload("Claim.Contexts")
 	db = db.Preload("Claim.Values")
 	db = db.Preload("Claim.Tags")
-	db = db.Preload("TargetClaim")
 	db = db.Preload("TargetClaim.Links")
 	db = db.Preload("TargetClaim.Contexts")
 	db = db.Preload("TargetClaim.Values")
 	db = db.Preload("TargetClaim.Tags")
-	db = db.Preload("TargetArgument")
 	db = db.Preload("TargetArgument.Claim")
 	err = db.Where("id = ?", id).First(&argument).Error
 	if err != nil {
-		c.String(http.StatusNotFound, "NotFound")
-		return err
+		return AddGruffError(ctx, c, gruff.NewServerError(err.Error()))
 	}
 
-	proRel := []gruff.Argument{}
+	proStrength := []gruff.Argument{}
 	db = ctx.Database
 	db = db.Preload("Claim")
-	db = db.Where("type = ?", gruff.ARGUMENT_TYPE_PRO_RELEVANCE)
+	db = db.Where("type = ?", gruff.ARGUMENT_TYPE_PRO_STRENGTH)
 	db = db.Where("target_argument_id = ?", id)
 	db = db.Scopes(gruff.OrderByBestArgument)
-	err = db.Find(&proRel).Error
+	err = db.Find(&proStrength).Error
 	if err != nil {
-		c.String(http.StatusInternalServerError, "ServerError")
-		return err
+		return AddGruffError(ctx, c, gruff.NewServerError(err.Error()))
 	}
-	argument.ProRelevance = proRel
+	argument.ProStrength = proStrength
 
-	fmt.Println("Pro Relevance:", proRel)
-
-	conRel := []gruff.Argument{}
+	conStrength := []gruff.Argument{}
 	db = ctx.Database
 	db = db.Preload("Claim")
-	db = db.Where("type = ?", gruff.ARGUMENT_TYPE_CON_RELEVANCE)
+	db = db.Where("type = ?", gruff.ARGUMENT_TYPE_CON_STRENGTH)
 	db = db.Where("target_argument_id = ?", id)
 	db = db.Scopes(gruff.OrderByBestArgument)
-	err = db.Find(&conRel).Error
+	err = db.Find(&conStrength).Error
 	if err != nil {
-		c.String(http.StatusInternalServerError, "ServerError")
-		return err
+		return AddGruffError(ctx, c, gruff.NewServerError(err.Error()))
 	}
-	argument.ConRelevance = conRel
-
-	fmt.Println("Con Relevance:", conRel)
-
-	proImpact := []gruff.Argument{}
-	db = ctx.Database
-	db = db.Preload("Claim")
-	db = db.Where("type = ?", gruff.ARGUMENT_TYPE_PRO_IMPACT)
-	db = db.Where("target_argument_id = ?", id)
-	db = db.Scopes(gruff.OrderByBestArgument)
-	err = db.Find(&proImpact).Error
-	if err != nil {
-		c.String(http.StatusInternalServerError, "ServerError")
-		return err
-	}
-	argument.ProImpact = proImpact
-
-	conImpact := []gruff.Argument{}
-	db = ctx.Database
-	db = db.Preload("Claim")
-	db = db.Where("type = ?", gruff.ARGUMENT_TYPE_CON_IMPACT)
-	db = db.Where("target_argument_id = ?", id)
-	db = db.Scopes(gruff.OrderByBestArgument)
-	err = db.Find(&conImpact).Error
-	if err != nil {
-		c.String(http.StatusInternalServerError, "ServerError")
-		return err
-	}
-	argument.ConImpact = conImpact
+	argument.ConStrength = conStrength
 
 	return c.JSON(http.StatusOK, argument)
 }
 
-func (ctx *Context) CreateArgument(c echo.Context) error {
+func CreateArgument(c echo.Context) error {
+	ctx := ServerContext(c)
+	db := ctx.Database
+
 	arg := gruff.Argument{Claim: &gruff.Claim{}}
 	if err := c.Bind(&arg); err != nil {
-		return err
+		return AddGruffError(ctx, c, gruff.NewNotFoundError(err.Error()))
 	}
 
-	arg.CreatedByID = CurrentUserID(c)
+	arg.CreatedByID = ctx.UserContext.ID
 
 	if arg.ClaimID == uuid.Nil {
 		ctxIds := arg.Claim.ContextIDs
@@ -125,18 +89,17 @@ func (ctx *Context) CreateArgument(c echo.Context) error {
 		}
 		valerr := BasicValidationForCreate(ctx, c, claim)
 		if valerr != nil {
-			return valerr
+			return AddGruffError(ctx, c, gruff.NewServerError(valerr.Error()))
 		}
-		err := ctx.Database.Create(&claim).Error
+		err := db.Create(&claim).Error
 		if err != nil {
-			c.String(http.StatusInternalServerError, "ServerError")
-			return err
+			return AddGruffError(ctx, c, gruff.NewServerError(err.Error()))
 		}
 		arg.ClaimID = claim.ID
 		arg.Claim = &claim
 
-		for _, ctxId := range ctxIds {
-			ctx.Database.Exec("INSERT INTO claim_contexts (claim_id, context_id) VALUES (?, ?)", claim.ID, ctxId)
+		for _, ctxID := range ctxIds {
+			db.Exec("INSERT INTO claim_contexts (claim_id, context_id) VALUES (?, ?)", claim.ID, ctxID)
 		}
 	} else {
 		arg.Claim = nil
@@ -144,47 +107,42 @@ func (ctx *Context) CreateArgument(c echo.Context) error {
 
 	valerr := BasicValidationForCreate(ctx, c, arg)
 	if valerr != nil {
-		return valerr
+		return AddGruffError(ctx, c, gruff.NewServerError(valerr.Error()))
 	}
 
-	if dberr := ctx.Database.Set("gorm:save_associations", false).Create(&arg).Error; dberr != nil {
-		c.String(http.StatusInternalServerError, "ServerError")
-		return dberr
+	if dberr := db.Set("gorm:save_associations", false).Create(&arg).Error; dberr != nil {
+		return AddGruffError(ctx, c, gruff.NewServerError(dberr.Error()))
 	}
 
 	return c.JSON(http.StatusCreated, arg)
 }
 
-func (ctx *Context) MoveArgument(c echo.Context) error {
+func MoveArgument(c echo.Context) error {
+	ctx := ServerContext(c)
+	db := ctx.Database
+
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		c.String(http.StatusNotFound, "NotFound")
-		return err
+		return AddGruffError(ctx, c, gruff.NewNotFoundError(err.Error()))
 	}
 
-	newId, err := uuid.Parse(c.Param("newId"))
+	newID, err := uuid.Parse(c.Param("newId"))
 	if err != nil {
-		c.String(http.StatusNotFound, "NotFound")
-		return err
+		return AddGruffError(ctx, c, gruff.NewNotFoundError(err.Error()))
 	}
 
 	t, err := strconv.Atoi(c.Param("type"))
 	if err != nil {
-		c.String(http.StatusNotFound, "NotFound")
-		return err
+		return AddGruffError(ctx, c, gruff.NewNotFoundError(err.Error()))
 	}
-
-	db := ctx.Database
 
 	arg := gruff.Argument{}
 	if err := db.Where("id = ?", id).First(&arg).Error; err != nil {
-		c.String(http.StatusNotFound, "NotFound")
-		return err
+		return AddGruffError(ctx, c, gruff.NewServerError(err.Error()))
 	}
 
-	if err := (&arg).MoveTo(ctx.ServerContext(), newId, t); err != nil {
-		c.String(http.StatusInternalServerError, "ServerError")
-		return err
+	if err := (&arg).MoveTo(ServerContext(c), newID, t); err != nil {
+		return AddGruffError(ctx, c, gruff.NewServerError(err.Error()))
 	}
 
 	ctx.Payload["results"] = arg

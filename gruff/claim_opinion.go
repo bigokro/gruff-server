@@ -12,3 +12,15 @@ type ClaimOpinion struct {
 	Claim   *Claim    `json:"claim,omitempty"`
 	Truth   float64   `json:"truth"`
 }
+
+func (co ClaimOpinion) ValidateForCreate() GruffError {
+	return ValidateStruct(co)
+}
+
+func (co ClaimOpinion) ValidateForUpdate() GruffError {
+	return co.ValidateForCreate()
+}
+
+func (co ClaimOpinion) ValidateField(f string) GruffError {
+	return ValidateStructField(co, f)
+}

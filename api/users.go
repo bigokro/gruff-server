@@ -1,18 +1,20 @@
 package api
 
 import (
+	"net/http"
+	"time"
+
 	"github.com/bigokro/gruff-server/gruff"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 	"golang.org/x/crypto/bcrypt"
-	"net/http"
-	"time"
 )
 
 type jwtCustomClaims struct {
 	ID       uint64 `json:"id"`
 	Name     string `json:"name"`
 	Username string `json:"username"`
+	Email    string `json:"email"`
 	Image    string `json:"img"`
 	Curator  bool   `json:"curator"`
 	Admin    bool   `json:"admin"`
@@ -25,41 +27,47 @@ type customPassword struct {
 	NewPassword string `json:"newpassword"`
 }
 
-func (ctx *Context) SignUp(c echo.Context) error {
+func SignUp(c echo.Context) error {
+	ctx := ServerContext(c)
+	db := ctx.Database
+
 	u := new(gruff.User)
 
 	if err := c.Bind(u); err != nil {
-		return err
+		return AddGruffError(ctx, c, gruff.NewServerError(err.Error()))
 	}
 
 	password := u.Password
 	u.Password = ""
 	u.HashedPassword, _ = bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 
-	if err := ctx.Database.Create(u).Error; err != nil {
-		return err
+	if err := db.Create(u).Error; err != nil {
+		return AddGruffError(ctx, c, gruff.NewServerError(err.Error()))
 	}
 
 	return c.JSON(http.StatusCreated, u)
 }
 
-func (ctx *Context) SignIn(c echo.Context) error {
+func SignIn(c echo.Context) error {
+	ctx := ServerContext(c)
+	db := ctx.Database
+
 	u := gruff.User{}
 	if err := c.Bind(&u); err != nil {
-		return err
+		return AddGruffError(ctx, c, gruff.NewServerError(err.Error()))
 	}
 
 	if u.Email != "" {
 		user := gruff.User{}
-		if err := ctx.Database.Where("email = ?", u.Email).Find(&user).Error; err != nil {
-			return c.String(http.StatusUnauthorized, "Unauthorized")
+		if err := db.Where("email = ?", u.Email).Find(&user).Error; err != nil {
+			return AddGruffError(ctx, c, gruff.NewUnauthorizedError("Unauthorized"))
 		}
 
 		if ok, _ := verifyPassword(user, u.Password); ok {
 
 			t, err := TokenForUser(user)
 			if err != nil {
-				return c.String(http.StatusUnauthorized, "Unauthorized")
+				return AddGruffError(ctx, c, gruff.NewUnauthorizedError("Unauthorized"))
 			}
 			u := map[string]interface{}{"user": user, "token": t}
 
@@ -68,7 +76,7 @@ func (ctx *Context) SignIn(c echo.Context) error {
 		}
 	}
 
-	return c.String(http.StatusUnauthorized, "Unauthorized")
+	return AddGruffError(ctx, c, gruff.NewUnauthorizedError("Unauthorized"))
 }
 
 func TokenForUser(user gruff.User) (string, error) {
@@ -76,6 +84,7 @@ func TokenForUser(user gruff.User) (string, error) {
 		user.ID,
 		user.Name,
 		user.Username,
+		user.Email,
 		user.Image,
 		user.Curator,
 		user.Admin,
@@ -94,27 +103,30 @@ func verifyPassword(user gruff.User, password string) (bool, error) {
 	return bcrypt.CompareHashAndPassword(user.HashedPassword, []byte(password)) == nil, nil
 }
 
-func (ctx *Context) ChangePassword(c echo.Context) error {
+func ChangePassword(c echo.Context) error {
+	ctx := ServerContext(c)
+	db := ctx.Database
+
 	u := new(customPassword)
 	if err := c.Bind(&u); err != nil {
-		return err
+		return AddGruffError(ctx, c, gruff.NewServerError(err.Error()))
 	}
 
 	user := gruff.User{}
-	err := ctx.Database.Where("email = ?", u.Email).Find(&user).Error
+	err := db.Where("email = ?", u.Email).Find(&user).Error
 	if err != nil {
-		return gruff.NewServerError(err.Error())
+		return AddGruffError(ctx, c, gruff.NewServerError(err.Error()))
 	}
 
 	if ok, _ := verifyPassword(user, u.OldPassword); ok {
 		user.HashedPassword, _ = bcrypt.GenerateFromPassword([]byte(u.NewPassword), bcrypt.DefaultCost)
 
-		if err := ctx.Database.Save(user).Error; err != nil {
-			return err
+		if err := db.Save(user).Error; err != nil {
+			return AddGruffError(ctx, c, gruff.NewServerError(err.Error()))
 		}
 
 		return c.JSON(http.StatusOK, user)
 	}
 
-	return c.String(http.StatusNotFound, "NotFound")
+	return AddGruffError(ctx, c, gruff.NewNotFoundError("Not Found"))
 }

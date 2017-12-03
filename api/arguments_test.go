@@ -172,11 +172,11 @@ func TestGetArgumentProTruth(t *testing.T) {
 
 	d1IDNull := gruff.NullableUUID{d1.ID}
 	d2IDNull := gruff.NullableUUID{d2.ID}
-	a3 := gruff.Argument{TargetClaimID: &d1IDNull, ClaimID: d3.ID, Type: gruff.ARGUMENT_TYPE_PRO_TRUTH, Title: "Argument 3", Relevance: 0.2309, Impact: 0.0293}
-	a4 := gruff.Argument{TargetClaimID: &d1IDNull, ClaimID: d4.ID, Type: gruff.ARGUMENT_TYPE_CON_TRUTH, Title: "Argument 4", Relevance: 0.29, Impact: 0.9823}
-	a5 := gruff.Argument{TargetClaimID: &d1IDNull, ClaimID: d5.ID, Type: gruff.ARGUMENT_TYPE_PRO_TRUTH, Title: "Argument 5", Relevance: 0.4893, Impact: 0.100}
-	a6 := gruff.Argument{TargetClaimID: &d2IDNull, ClaimID: d6.ID, Type: gruff.ARGUMENT_TYPE_PRO_TRUTH, Title: "Argument 6", Relevance: 0.438, Impact: 0.2398}
-	a7 := gruff.Argument{TargetClaimID: &d2IDNull, ClaimID: d7.ID, Type: gruff.ARGUMENT_TYPE_CON_TRUTH, Title: "Argument 7", Relevance: 0.2398, Impact: 0.120}
+	a3 := gruff.Argument{TargetClaimID: &d1IDNull, ClaimID: d3.ID, Type: gruff.ARGUMENT_TYPE_PRO_TRUTH, Title: "Argument 3", Strength: 0.0293}
+	a4 := gruff.Argument{TargetClaimID: &d1IDNull, ClaimID: d4.ID, Type: gruff.ARGUMENT_TYPE_CON_TRUTH, Title: "Argument 4", Strength: 0.9823}
+	a5 := gruff.Argument{TargetClaimID: &d1IDNull, ClaimID: d5.ID, Type: gruff.ARGUMENT_TYPE_PRO_TRUTH, Title: "Argument 5", Strength: 0.100}
+	a6 := gruff.Argument{TargetClaimID: &d2IDNull, ClaimID: d6.ID, Type: gruff.ARGUMENT_TYPE_PRO_TRUTH, Title: "Argument 6", Strength: 0.2398}
+	a7 := gruff.Argument{TargetClaimID: &d2IDNull, ClaimID: d7.ID, Type: gruff.ARGUMENT_TYPE_CON_TRUTH, Title: "Argument 7", Strength: 0.120}
 	TESTDB.Create(&a3)
 	TESTDB.Create(&a4)
 	TESTDB.Create(&a5)
@@ -184,13 +184,13 @@ func TestGetArgumentProTruth(t *testing.T) {
 	TESTDB.Create(&a7)
 
 	a3IDNull := gruff.NullableUUID{a3.ID}
-	a4IDNull := gruff.NullableUUID{a4.ID}
-	a8 := gruff.Argument{TargetArgumentID: &a3IDNull, ClaimID: d8.ID, Type: gruff.ARGUMENT_TYPE_PRO_RELEVANCE, Title: "Argument 8", Relevance: 0.9, Impact: 0.9823}
-	a9 := gruff.Argument{TargetArgumentID: &a3IDNull, ClaimID: d9.ID, Type: gruff.ARGUMENT_TYPE_CON_RELEVANCE, Title: "Argument 9", Relevance: 0.2398, Impact: 0.83}
-	a10 := gruff.Argument{TargetClaimID: &a4IDNull, ClaimID: d3.ID, Type: gruff.ARGUMENT_TYPE_CON_IMPACT, Title: "Argument 10", Relevance: 0.2398, Impact: 0.83}
+	// a4IDNull := gruff.NullableUUID{a4.ID}
+	a8 := gruff.Argument{TargetArgumentID: &a3IDNull, ClaimID: d8.ID, Type: gruff.ARGUMENT_TYPE_PRO_STRENGTH, Title: "Argument 8", Strength: 0.9823}
+	a9 := gruff.Argument{TargetArgumentID: &a3IDNull, ClaimID: d9.ID, Type: gruff.ARGUMENT_TYPE_CON_STRENGTH, Title: "Argument 9", Strength: 0.83}
+	// a10 := gruff.Argument{TargetClaimID: &a4IDNull, ClaimID: d3.ID, Type: gruff.ARGUMENT_TYPE_CON_STRENGTH, Title: "Argument 10", Strength: 0.83}
 	TESTDB.Create(&a8)
 	TESTDB.Create(&a9)
-	TESTDB.Create(&a10)
+	// TESTDB.Create(&a10)
 
 	a3.Claim = &d3
 	a4.Claim = &d4
@@ -199,7 +199,7 @@ func TestGetArgumentProTruth(t *testing.T) {
 	a7.Claim = &d7
 	a8.Claim = &d8
 	a9.Claim = &d9
-	a10.Claim = &d3
+	// a10.Claim = &d3
 
 	db := TESTDB
 	db = db.Preload("Links")
@@ -209,8 +209,8 @@ func TestGetArgumentProTruth(t *testing.T) {
 	db.Where("id = ?", d1.ID).First(&d1)
 
 	a3.TargetClaim = &d1
-	a3.ProRelevance = []gruff.Argument{a8}
-	a3.ConRelevance = []gruff.Argument{a9}
+	a3.ProStrength = []gruff.Argument{a8}
+	a3.ConStrength = []gruff.Argument{a9}
 
 	expectedResults, _ := json.Marshal(a3)
 
@@ -298,7 +298,7 @@ func TestCreateArgumentForArgument(t *testing.T) {
 	a2 := gruff.Argument{
 		ClaimID:          d3.ID,
 		TargetArgumentID: &gruff.NullableUUID{UUID: a1.ID},
-		Type:             gruff.ARGUMENT_TYPE_PRO_RELEVANCE,
+		Type:             gruff.ARGUMENT_TYPE_PRO_STRENGTH,
 		Title:            "This is an argument to an argument",
 		Description:      "This is an argumentous description",
 	}
@@ -312,7 +312,7 @@ func TestCreateArgumentForArgument(t *testing.T) {
 	expectedResults, _ := json.Marshal(a2)
 
 	assert.Equal(t, string(expectedResults), res.Body.String())
-	assert.Equal(t, gruff.ARGUMENT_TYPE_PRO_RELEVANCE, a2.Type)
+	assert.Equal(t, gruff.ARGUMENT_TYPE_PRO_STRENGTH, a2.Type)
 	assert.Equal(t, d3.ID, a2.ClaimID)
 	assert.Equal(t, a1.ID, a2.TargetArgumentID.UUID)
 }
@@ -505,7 +505,7 @@ func TestCreateArgumentForArgumentWithNewClaim(t *testing.T) {
 	a2 := gruff.Argument{
 		Claim:            &d3,
 		TargetArgumentID: &gruff.NullableUUID{UUID: a1.ID},
-		Type:             gruff.ARGUMENT_TYPE_PRO_RELEVANCE,
+		Type:             gruff.ARGUMENT_TYPE_PRO_STRENGTH,
 		Title:            "This is an argument to an argument",
 		Description:      "This is an argumentous description",
 	}
@@ -519,7 +519,7 @@ func TestCreateArgumentForArgumentWithNewClaim(t *testing.T) {
 	expectedResults, _ := json.Marshal(a2)
 
 	assert.Equal(t, string(expectedResults), res.Body.String())
-	assert.Equal(t, gruff.ARGUMENT_TYPE_PRO_RELEVANCE, a2.Type)
+	assert.Equal(t, gruff.ARGUMENT_TYPE_PRO_STRENGTH, a2.Type)
 	assert.Equal(t, a1.ID, a2.TargetArgumentID.UUID)
 
 	assert.Equal(t, d3.Title, a2.Claim.Title)

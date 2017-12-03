@@ -2,13 +2,14 @@ package api
 
 import (
 	_ "errors"
+
 	"github.com/bigokro/gruff-server/gruff"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/labstack/echo"
 )
 
-var CTX *Context
+var CTX *gruff.ServerContext
 var INITDB *gorm.DB
 var TESTDB *gorm.DB
 
@@ -23,7 +24,7 @@ func setup() {
 	TESTDB = INITDB.Begin()
 
 	if CTX == nil {
-		CTX = &Context{}
+		CTX = &gruff.ServerContext{}
 	}
 
 	CTX.Database = TESTDB

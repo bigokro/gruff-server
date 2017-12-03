@@ -12,3 +12,15 @@ type Link struct {
 	ClaimID     uuid.UUID `json:"claimId" sql:"type:uuid;not null"`
 	Claim       *Claim    `json:"claim,omitempty"`
 }
+
+func (l Link) ValidateForCreate() GruffError {
+	return ValidateStruct(l)
+}
+
+func (l Link) ValidateForUpdate() GruffError {
+	return l.ValidateForCreate()
+}
+
+func (l Link) ValidateField(f string) GruffError {
+	return ValidateStructField(l, f)
+}

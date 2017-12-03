@@ -1,7 +1,5 @@
 package gruff
 
-import ()
-
 const CHANGE_TYPE_CREATED_CLAIM int = 1
 const CHANGE_TYPE_CREATED_ARGUMENT int = 2
 const CHANGE_TYPE_CREATED_CLAIM_AND_ARGUMENT int = 3
@@ -54,4 +52,16 @@ type ChangeLog struct {
 	NewArg     *Argument     `json:"newArg,omitempty"`
 	OldArgType *int          `json:"oldArgType,omitempty"`
 	NewArgType *int          `json:"newArgType,omitempty"`
+}
+
+func (cl ChangeLog) ValidateForCreate() GruffError {
+	return ValidateStruct(cl)
+}
+
+func (cl ChangeLog) ValidateForUpdate() GruffError {
+	return cl.ValidateForCreate()
+}
+
+func (cl ChangeLog) ValidateField(f string) GruffError {
+	return ValidateStructField(cl, f)
 }

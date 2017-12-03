@@ -2,8 +2,9 @@ package gruff
 
 import (
 	"fmt"
-	"github.com/asaskevich/govalidator"
 	"reflect"
+
+	"github.com/asaskevich/govalidator"
 )
 
 type Validator interface {
@@ -44,19 +45,6 @@ func ValidateStructFields(item interface{}) GruffError {
 	}
 
 	return nil
-	// result := ""
-	// for _, f := range fs {
-	// 	errStr := govalidator.ErrorByField(err, f)
-	// 	if errStr != "" {
-	// 		result = fmt.Sprintf("%s%s: %s;", result, f, errStr)
-	// 	}
-	// }
-
-	// if result == "" {
-	// 	return nil
-	// } else {
-	// 	return NewBusinessError(result)
-	// }
 }
 
 func ValidateRequiredFields(item interface{}, fields []string) GruffError {

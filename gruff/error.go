@@ -18,6 +18,7 @@ type GruffError interface {
 
 const ERROR_CODE_WARNING int = 300
 const ERROR_CODE_BUSINESS_ERROR int = 400
+const ERROR_CODE_UNAUTHORIZED_ERROR int = 401
 const ERROR_CODE_PERMISSION_ERROR int = 403
 const ERROR_CODE_NOT_FOUND int = 404
 const ERROR_CODE_SERVER_ERROR int = 500
@@ -66,7 +67,7 @@ func (err CoreError) IsWarning() bool {
 	return err.ErrCode == ERROR_CODE_WARNING
 }
 
-func NewCoreError(code, subcode int, location, msg string, data map[string]interface{}) GruffError {
+func NewGruffError(code, subcode int, location, msg string, data map[string]interface{}) GruffError {
 	if subcode == 0 {
 		if code == ERROR_CODE_BUSINESS_ERROR {
 			subcode = ERROR_SUBCODE_UNDEFINED
@@ -85,6 +86,10 @@ func NewCoreError(code, subcode int, location, msg string, data map[string]inter
 
 func NewWarning(msg string, opts ...interface{}) GruffError {
 	return newElipsisError(ERROR_CODE_WARNING, msg, opts...)
+}
+
+func NewUnauthorizedError(msg string, opts ...interface{}) GruffError {
+	return newElipsisError(ERROR_CODE_UNAUTHORIZED_ERROR, msg, opts...)
 }
 
 func NewBusinessError(msg string, opts ...interface{}) GruffError {
@@ -117,7 +122,7 @@ func newElipsisError(code int, msg string, opts ...interface{}) GruffError {
 		}
 	}
 
-	return NewCoreError(code, subcode, ParentCallerInfo(), msg, data)
+	return NewGruffError(code, subcode, ParentCallerInfo(), msg, data)
 }
 
 func ParentCallerInfo() string {

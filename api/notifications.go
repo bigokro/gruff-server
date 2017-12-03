@@ -1,52 +1,51 @@
 package api
 
 import (
-	"errors"
+	"net/http"
+
 	"github.com/bigokro/gruff-server/gruff"
 	"github.com/labstack/echo"
-	"net/http"
 )
 
-func (ctx *Context) ListNotifications(c echo.Context) error {
-	userId := CurrentUserID(c)
+func ListNotifications(c echo.Context) error {
+	ctx := ServerContext(c)
+	db := ctx.Database
+
+	userID := ctx.UserContext.ID
 
 	notifications := []gruff.Notification{}
-	db := ctx.Database
-	db = db.Where("user_id = ?", userId)
+	db = db.Where("user_id = ?", userID)
 	db = db.Where("viewed = false")
 	db = db.Order("created_at DESC")
 	if err := db.Find(&notifications).Error; err != nil {
-		return gruff.NewServerError(err.Error())
+		return AddGruffError(ctx, c, gruff.NewServerError(err.Error()))
 	}
 
 	return c.JSON(http.StatusOK, notifications)
 }
 
-func (ctx *Context) MarkNotificationViewed(c echo.Context) error {
+func MarkNotificationViewed(c echo.Context) error {
+	ctx := ServerContext(c)
 	db := ctx.Database
 
-	userId := CurrentUserID(c)
-	notificationId := c.Param("id")
-	if notificationId == "" {
-		c.String(http.StatusNotFound, "NotFound")
-		return errors.New("Not found")
+	userID := ctx.UserContext.ID
+	notificationID := c.Param("id")
+	if notificationID == "" {
+		return AddGruffError(ctx, c, gruff.NewNotFoundError("Not Found"))
 	}
 
 	notification := gruff.Notification{}
-	if err := db.First(&notification, notificationId).Error; err != nil {
-		c.String(http.StatusNotFound, "NotFound")
-		return errors.New("Not found")
+	if err := db.First(&notification, notificationID).Error; err != nil {
+		return AddGruffError(ctx, c, gruff.NewServerError(err.Error()))
 	}
 
-	if notification.UserID != userId {
-		c.String(http.StatusUnauthorized, "Unauthorized")
-		return errors.New("This is not your notification")
+	if notification.UserID != userID {
+		return AddGruffError(ctx, c, gruff.NewUnauthorizedError("Unauthorized"))
 	}
 
 	notification.Viewed = true
 	if err := db.Save(&notification).Error; err != nil {
-		c.String(http.StatusInternalServerError, "ServerError")
-		return gruff.NewServerError(err.Error())
+		return AddGruffError(ctx, c, gruff.NewServerError(err.Error()))
 	}
 
 	return c.JSON(http.StatusOK, notification)

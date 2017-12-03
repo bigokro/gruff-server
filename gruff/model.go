@@ -3,9 +3,10 @@ package gruff
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/jinzhu/gorm"
 	"reflect"
 	"time"
+
+	"github.com/jinzhu/gorm"
 )
 
 type Model struct {
@@ -13,6 +14,21 @@ type Model struct {
 	CreatedAt time.Time  `json:"-" sql:"DEFAULT:current_timestamp"`
 	UpdatedAt time.Time  `json:"-" sql:"DEFAULT:current_timestamp"`
 	DeletedAt *time.Time `json:"-" settable:"false"`
+}
+
+type ServerContext struct {
+	Database    *gorm.DB
+	Payload     map[string]interface{}
+	Request     map[string]interface{}
+	Type        reflect.Type
+	ParentType  reflect.Type
+	Test        bool
+	UserContext User
+	AppName     string
+	Method      string
+	Path        string
+	Endpoint    string
+	RequestID   string
 }
 
 func ModelToJson(model interface{}) string {
@@ -75,11 +91,6 @@ func JsonToModel(jsonStr string, item interface{}) error {
 		}
 	}
 	return err
-}
-
-type ServerContext struct {
-	Database *gorm.DB
-	Test     bool
 }
 
 func UintPtr(val uint64) *uint64 {

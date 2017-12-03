@@ -1,30 +1,26 @@
 package api
 
 import (
-	"errors"
-	"fmt"
-	"github.com/bigokro/gruff-server/gruff"
-	"github.com/google/uuid"
-	"github.com/labstack/echo"
 	"net/http"
 	"reflect"
 	"strings"
+
+	"github.com/bigokro/gruff-server/gruff"
+	"github.com/google/uuid"
+	"github.com/labstack/echo"
 )
 
-func Claims(c echo.Context) error {
-	return c.String(http.StatusOK, "Claims")
-}
+func GetClaim(c echo.Context) error {
+	ctx := ServerContext(c)
+	db := ctx.Database
 
-func (ctx *Context) GetClaim(c echo.Context) error {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		c.String(http.StatusNotFound, "NotFound")
-		return err
+		return AddGruffError(ctx, c, gruff.NewNotFoundError(err.Error()))
 	}
 
 	claim := gruff.Claim{}
 
-	db := ctx.Database
 	db = db.Preload("Links")
 	db = db.Preload("Contexts")
 	db = db.Preload("Values")
@@ -32,8 +28,7 @@ func (ctx *Context) GetClaim(c echo.Context) error {
 	db = db.Where("id = ?", id)
 	err = db.First(&claim).Error
 	if err != nil {
-		c.String(http.StatusNotFound, "NotFound")
-		return err
+		return AddGruffError(ctx, c, gruff.NewServerError(err.Error()))
 	}
 
 	proArgs := []gruff.Argument{}
@@ -44,8 +39,7 @@ func (ctx *Context) GetClaim(c echo.Context) error {
 	db = db.Scopes(gruff.OrderByBestArgument)
 	err = db.Find(&proArgs).Error
 	if err != nil {
-		c.String(http.StatusInternalServerError, "ServerError")
-		return err
+		return AddGruffError(ctx, c, gruff.NewServerError(err.Error()))
 	}
 	claim.ProTruth = proArgs
 
@@ -57,46 +51,48 @@ func (ctx *Context) GetClaim(c echo.Context) error {
 	db = db.Scopes(gruff.OrderByBestArgument)
 	err = db.Find(&conArgs).Error
 	if err != nil {
-		c.String(http.StatusInternalServerError, "ServerError")
-		return err
+		return AddGruffError(ctx, c, gruff.NewServerError(err.Error()))
 	}
 	claim.ConTruth = conArgs
 
 	return c.JSON(http.StatusOK, claim)
 }
 
-func (ctx *Context) ListTopClaims(c echo.Context) error {
+func ListTopClaims(c echo.Context) error {
+	ctx := ServerContext(c)
+	db := ctx.Database
+
 	claims := []gruff.Claim{}
 
-	db := ctx.Database
 	db = BasicJoins(ctx, c, db)
 	db = db.Where("0 = (SELECT COUNT(*) FROM arguments WHERE claim_id = claims.id)")
 	db = BasicPaging(ctx, c, db)
 
 	err := db.Find(&claims).Error
 	if err != nil {
-		return gruff.NewServerError(err.Error())
+		return AddGruffError(ctx, c, gruff.NewServerError(err.Error()))
 	}
 
 	if ctx.Payload["ct"] != nil {
 		ctx.Payload["results"] = claims
 		return c.JSON(http.StatusOK, ctx.Payload)
-	} else {
-		return c.JSON(http.StatusOK, claims)
 	}
+
+	return c.JSON(http.StatusOK, claims)
 }
 
-func (ctx *Context) SetScore(c echo.Context) error {
+func SetScore(c echo.Context) error {
+	ctx := ServerContext(c)
+	db := ctx.Database
+
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		c.String(http.StatusNotFound, "NotFound")
-		return err
+		return AddGruffError(ctx, c, gruff.NewNotFoundError(err.Error()))
 	}
 
-	user, err := CurrentUser(c, ctx.Database)
+	user := ctx.UserContext
 	if err != nil {
-		c.String(http.StatusUnauthorized, "NotAuthorized")
-		return err
+		return AddGruffError(ctx, c, gruff.NewUnauthorizedError(err.Error()))
 	}
 
 	paths := strings.Split(c.Path(), "/")
@@ -115,21 +111,17 @@ func (ctx *Context) SetScore(c echo.Context) error {
 		target = &gruff.Argument{}
 		item = &gruff.ArgumentOpinion{UserID: user.ID, ArgumentID: id}
 	default:
-		c.String(http.StatusNotFound, "NotFound")
-		return errors.New("Not found")
+		return AddGruffError(ctx, c, gruff.NewNotFoundError(err.Error()))
 	}
 
-	db := ctx.Database
 	err = db.Where("id = ?", id).First(target).Error
 	if err != nil {
-		c.String(http.StatusNotFound, "NotFound")
-		return err
+		return AddGruffError(ctx, c, gruff.NewServerError(err.Error()))
 	}
 
 	data := map[string]interface{}{}
 	if err := c.Bind(&data); err != nil {
-		fmt.Println("Error:", err)
-		return err
+		return AddGruffError(ctx, c, gruff.NewServerError(err.Error()))
 	}
 	var score float64
 	if val, ok := data["score"]; ok {
@@ -149,25 +141,23 @@ func (ctx *Context) SetScore(c echo.Context) error {
 		db = ctx.Database
 		err = db.Create(item).Error
 		if err != nil {
-			c.String(http.StatusInternalServerError, "ServerError")
-			return err
+			return AddGruffError(ctx, c, gruff.NewServerError(err.Error()))
 		}
 	} else {
 		setScore(item, scoreType, score)
 		db = ctx.Database
 		err = db.Save(item).Error
 		if err != nil {
-			c.String(http.StatusInternalServerError, "ServerError")
-			return err
+			return AddGruffError(ctx, c, gruff.NewServerError(err.Error()))
 		}
 		status = http.StatusAccepted
 	}
 
 	switch scoreType {
 	case "truth":
-		target.(*gruff.Claim).UpdateTruth(ctx.ServerContext())
+		target.(*gruff.Claim).UpdateTruth(ServerContext(c))
 	case "strength":
-		target.(*gruff.Argument).UpdateStrength(ctx.ServerContext())
+		target.(*gruff.Argument).UpdateStrength(ServerContext(c))
 	}
 
 	return c.JSON(status, item)

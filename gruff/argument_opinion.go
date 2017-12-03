@@ -12,3 +12,15 @@ type ArgumentOpinion struct {
 	Argument   *Argument `json:"argument,omitempty"`
 	Strength   float64   `json:"strength"`
 }
+
+func (ao ArgumentOpinion) ValidateForCreate() GruffError {
+	return ValidateStruct(ao)
+}
+
+func (ao ArgumentOpinion) ValidateForUpdate() GruffError {
+	return ao.ValidateForCreate()
+}
+
+func (ao ArgumentOpinion) ValidateField(f string) GruffError {
+	return ValidateStructField(ao, f)
+}

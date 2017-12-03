@@ -10,3 +10,15 @@ type Context struct {
 	MID         string   `json:"mid"` // Google KG ID
 	QID         string   `json:"qid"` // Wikidata ID
 }
+
+func (c Context) ValidateForCreate() GruffError {
+	return ValidateStruct(c)
+}
+
+func (c Context) ValidateForUpdate() GruffError {
+	return c.ValidateForCreate()
+}
+
+func (c Context) ValidateField(f string) GruffError {
+	return ValidateStructField(c, f)
+}

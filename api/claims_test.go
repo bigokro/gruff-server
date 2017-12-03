@@ -3,10 +3,11 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/bigokro/gruff-server/gruff"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"testing"
+
+	"github.com/bigokro/gruff-server/gruff"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestListClaims(t *testing.T) {
@@ -192,14 +193,14 @@ func TestGetClaim(t *testing.T) {
 	d2IDNull := gruff.NullableUUID{d2.ID}
 	d3IDNull := gruff.NullableUUID{d3.ID}
 	d4IDNull := gruff.NullableUUID{d4.ID}
-	a3 := gruff.Argument{TargetClaimID: &d1IDNull, ClaimID: d3.ID, Type: gruff.ARGUMENT_TYPE_PRO_TRUTH, Title: "Argument 3", Relevance: 0.2309, Impact: 0.0293}
-	a4 := gruff.Argument{TargetClaimID: &d1IDNull, ClaimID: d4.ID, Type: gruff.ARGUMENT_TYPE_CON_TRUTH, Title: "Argument 4", Relevance: 0.29, Impact: 0.9823}
-	a5 := gruff.Argument{TargetClaimID: &d1IDNull, ClaimID: d5.ID, Type: gruff.ARGUMENT_TYPE_PRO_TRUTH, Title: "Argument 5", Relevance: 0.4893, Impact: 0.100}
-	a6 := gruff.Argument{TargetClaimID: &d2IDNull, ClaimID: d6.ID, Type: gruff.ARGUMENT_TYPE_PRO_TRUTH, Title: "Argument 6", Relevance: 0.438, Impact: 0.2398}
-	a7 := gruff.Argument{TargetClaimID: &d2IDNull, ClaimID: d7.ID, Type: gruff.ARGUMENT_TYPE_CON_TRUTH, Title: "Argument 7", Relevance: 0.2398, Impact: 0.120}
-	a8 := gruff.Argument{TargetArgumentID: &d3IDNull, ClaimID: d8.ID, Type: gruff.ARGUMENT_TYPE_PRO_RELEVANCE, Title: "Argument 8", Relevance: 0.9, Impact: 0.9823}
-	a9 := gruff.Argument{TargetArgumentID: &d3IDNull, ClaimID: d9.ID, Type: gruff.ARGUMENT_TYPE_CON_RELEVANCE, Title: "Argument 9", Relevance: 0.2398, Impact: 0.83}
-	a10 := gruff.Argument{TargetClaimID: &d4IDNull, ClaimID: d3.ID, Type: gruff.ARGUMENT_TYPE_CON_IMPACT, Title: "Argument 10", Relevance: 0.2398, Impact: 0.83}
+	a3 := gruff.Argument{TargetClaimID: &d1IDNull, ClaimID: d3.ID, Type: gruff.ARGUMENT_TYPE_PRO_TRUTH, Title: "Argument 3", Strength: 0.0293}
+	a4 := gruff.Argument{TargetClaimID: &d1IDNull, ClaimID: d4.ID, Type: gruff.ARGUMENT_TYPE_CON_TRUTH, Title: "Argument 4", Strength: 0.9823}
+	a5 := gruff.Argument{TargetClaimID: &d1IDNull, ClaimID: d5.ID, Type: gruff.ARGUMENT_TYPE_PRO_TRUTH, Title: "Argument 5", Strength: 0.100}
+	a6 := gruff.Argument{TargetClaimID: &d2IDNull, ClaimID: d6.ID, Type: gruff.ARGUMENT_TYPE_PRO_TRUTH, Title: "Argument 6", Strength: 0.2398}
+	a7 := gruff.Argument{TargetClaimID: &d2IDNull, ClaimID: d7.ID, Type: gruff.ARGUMENT_TYPE_CON_TRUTH, Title: "Argument 7", Strength: 0.120}
+	a8 := gruff.Argument{TargetArgumentID: &d3IDNull, ClaimID: d8.ID, Type: gruff.ARGUMENT_TYPE_PRO_STRENGTH, Title: "Argument 8", Strength: 0.9823}
+	a9 := gruff.Argument{TargetArgumentID: &d3IDNull, ClaimID: d9.ID, Type: gruff.ARGUMENT_TYPE_PRO_STRENGTH, Title: "Argument 9", Strength: 0.83}
+	a10 := gruff.Argument{TargetClaimID: &d4IDNull, ClaimID: d3.ID, Type: gruff.ARGUMENT_TYPE_CON_STRENGTH, Title: "Argument 10", Strength: 0.83}
 	TESTDB.Create(&a3)
 	TESTDB.Create(&a4)
 	TESTDB.Create(&a5)
@@ -325,7 +326,7 @@ func TestSetTruthScoreUpdate(t *testing.T) {
 	}
 	TESTDB.Create(&co)
 
-	c1.UpdateTruth(CTX.ServerContext())
+	c1.UpdateTruth(CTX)
 	TESTDB.First(&c1)
 	assert.Equal(t, 0.8239, c1.Truth)
 
@@ -347,7 +348,7 @@ func TestSetTruthScoreUpdate(t *testing.T) {
 	assert.Equal(t, 0.2394, c1.Truth)
 }
 
-func TestSetScoreImpact(t *testing.T) {
+func TestSetScoreStrength(t *testing.T) {
 	setup()
 	defer teardown()
 	u := createTestUser()
@@ -365,7 +366,7 @@ func TestSetScoreImpact(t *testing.T) {
 		"score": 0.2394,
 	}
 
-	r.POST(fmt.Sprintf("/api/arguments/%s/impact", a.ID))
+	r.POST(fmt.Sprintf("/api/arguments/%s/strength", a.ID))
 	r.SetBody(m)
 	res, _ := r.Run(Router())
 	assert.Equal(t, http.StatusCreated, res.Code)
@@ -373,13 +374,13 @@ func TestSetScoreImpact(t *testing.T) {
 	co := gruff.ArgumentOpinion{}
 	err := TESTDB.Where("user_id = ?", u.ID).Where("argument_id = ?", a.ID).First(&co).Error
 	assert.Nil(t, err)
-	assert.Equal(t, 0.2394, co.Impact)
+	assert.Equal(t, 0.2394, co.Strength)
 
 	TESTDB.First(&a)
-	assert.Equal(t, 0.2394, a.Impact)
+	assert.Equal(t, 0.2394, a.Strength)
 }
 
-func TestSetScoreImpactUpdate(t *testing.T) {
+func TestSetScoreStrengthUpdate(t *testing.T) {
 	setup()
 	defer teardown()
 	u := createTestUser()
@@ -396,19 +397,18 @@ func TestSetScoreImpactUpdate(t *testing.T) {
 	co := gruff.ArgumentOpinion{
 		UserID:     u.ID,
 		ArgumentID: a.ID,
-		Impact:     0.8239,
-		Relevance:  0.3299,
+		Strength:   0.8239,
 	}
 	TESTDB.Create(&co)
 
-	a.UpdateImpact(CTX.ServerContext())
-	a.UpdateRelevance(CTX.ServerContext())
+	a.UpdateStrength(CTX)
+	// a.UpdateRelevance(CTX.ServerContext())
 
 	m := map[string]interface{}{
 		"score": 0.2394,
 	}
 
-	r.POST(fmt.Sprintf("/api/arguments/%s/impact", a.ID))
+	r.POST(fmt.Sprintf("/api/arguments/%s/strength", a.ID))
 	r.SetBody(m)
 	res, _ := r.Run(Router())
 	assert.Equal(t, http.StatusAccepted, res.Code)
@@ -416,89 +416,10 @@ func TestSetScoreImpactUpdate(t *testing.T) {
 	co = gruff.ArgumentOpinion{}
 	err := TESTDB.Where("user_id = ?", u.ID).Where("argument_id = ?", a.ID).First(&co).Error
 	assert.Nil(t, err)
-	assert.Equal(t, 0.2394, co.Impact)
-	assert.Equal(t, 0.3299, co.Relevance)
+	assert.Equal(t, 0.2394, co.Strength)
 
 	TESTDB.First(&a)
-	assert.Equal(t, 0.2394, a.Impact)
-	assert.Equal(t, 0.3299, a.Relevance)
-}
-
-func TestSetScoreRelevance(t *testing.T) {
-	setup()
-	defer teardown()
-	u := createTestUser()
-	r := New(tokenForTestUser(u))
-
-	c1 := createClaim()
-	c2 := createClaim()
-	TESTDB.Create(&c1)
-	TESTDB.Create(&c2)
-
-	a := gruff.Argument{TargetClaimID: gruff.NUUID(c1.ID), ClaimID: c2.ID, Title: "An arg"}
-	TESTDB.Create(&a)
-
-	m := map[string]interface{}{
-		"score": 0.2394,
-	}
-
-	r.POST(fmt.Sprintf("/api/arguments/%s/relevance", a.ID))
-	r.SetBody(m)
-	res, _ := r.Run(Router())
-	assert.Equal(t, http.StatusCreated, res.Code)
-
-	co := gruff.ArgumentOpinion{}
-	err := TESTDB.Where("user_id = ?", u.ID).Where("argument_id = ?", a.ID).First(&co).Error
-	assert.Nil(t, err)
-	assert.Equal(t, 0.2394, co.Relevance)
-
-	TESTDB.First(&a)
-	assert.Equal(t, 0.2394, a.Relevance)
-}
-
-func TestSetScoreRelevanceUpdate(t *testing.T) {
-	setup()
-	defer teardown()
-	u := createTestUser()
-	r := New(tokenForTestUser(u))
-
-	c1 := createClaim()
-	c2 := createClaim()
-	TESTDB.Create(&c1)
-	TESTDB.Create(&c2)
-
-	a := gruff.Argument{TargetClaimID: gruff.NUUID(c1.ID), ClaimID: c2.ID, Title: "An arg"}
-	TESTDB.Create(&a)
-
-	co := gruff.ArgumentOpinion{
-		UserID:     u.ID,
-		ArgumentID: a.ID,
-		Relevance:  0.8239,
-		Impact:     0.3299,
-	}
-	TESTDB.Create(&co)
-
-	a.UpdateImpact(CTX.ServerContext())
-	a.UpdateRelevance(CTX.ServerContext())
-
-	m := map[string]interface{}{
-		"score": 0.2394,
-	}
-
-	r.POST(fmt.Sprintf("/api/arguments/%s/relevance", a.ID))
-	r.SetBody(m)
-	res, _ := r.Run(Router())
-	assert.Equal(t, http.StatusAccepted, res.Code)
-
-	co = gruff.ArgumentOpinion{}
-	err := TESTDB.Where("user_id = ?", u.ID).Where("argument_id = ?", a.ID).First(&co).Error
-	assert.Nil(t, err)
-	assert.Equal(t, 0.2394, co.Relevance)
-	assert.Equal(t, 0.3299, co.Impact)
-
-	TESTDB.First(&a)
-	assert.Equal(t, 0.2394, a.Relevance)
-	assert.Equal(t, 0.3299, a.Impact)
+	assert.Equal(t, 0.2394, a.Strength)
 }
 
 func createClaim() gruff.Claim {

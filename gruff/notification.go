@@ -26,7 +26,19 @@ type Notification struct {
 	Viewed   bool          `json:"viewed" sql:"not null"`
 }
 
-func NotifyArgumentMoved(ctx ServerContext, userId uint64, argId uuid.UUID, oldTargetId uuid.UUID, oldTargetType int) GruffError {
+func (n Notification) ValidateForCreate() GruffError {
+	return ValidateStruct(n)
+}
+
+func (n Notification) ValidateForUpdate() GruffError {
+	return n.ValidateForCreate()
+}
+
+func (n Notification) ValidateField(f string) GruffError {
+	return ValidateStructField(n, f)
+}
+
+func NotifyArgumentMoved(ctx *ServerContext, userId uint64, argId uuid.UUID, oldTargetId uuid.UUID, oldTargetType int) GruffError {
 	n := Notification{
 		UserID:   userId,
 		Type:     NOTIFICATION_TYPE_MOVED,
@@ -41,7 +53,7 @@ func NotifyArgumentMoved(ctx ServerContext, userId uint64, argId uuid.UUID, oldT
 	return nil
 }
 
-func NotifyParentArgumentMoved(ctx ServerContext, userId uint64, parentArgId uuid.UUID, oldTargetId uuid.UUID, oldTargetType int) GruffError {
+func NotifyParentArgumentMoved(ctx *ServerContext, userId uint64, parentArgId uuid.UUID, oldTargetId uuid.UUID, oldTargetType int) GruffError {
 	n := Notification{
 		UserID:   userId,
 		Type:     NOTIFICATION_TYPE_PARENT_MOVED,
